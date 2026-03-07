@@ -56,14 +56,20 @@ go run server.go
 
 Opens automatically at [http://localhost:3000](http://localhost:3000).
 
-### Docker
+### Docker (pre-built)
+
+```bash
+docker run -p 3000:3000 maxmtmn/gala-playground
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+### Docker (build from source)
 
 ```bash
 docker build -t gala-playground .
 docker run -p 3000:3000 gala-playground
 ```
-
-Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
@@ -95,6 +101,7 @@ gala-playground/
 |----------|--------|-------------|
 | `/api/run` | POST | Execute GALA code. Body: `{"code": "..."}`. Returns: `{"output", "error", "time"}` |
 | `/api/examples` | GET | List all built-in examples. Returns: `[{"name", "code"}]` |
+| `/api/version` | GET | Returns the GALA version. Returns: `{"version": "0.10.0"}` |
 | `/` | GET | Serves the playground UI |
 
 ### Limits
