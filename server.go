@@ -168,6 +168,21 @@ func handleExamples(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(examples)
 }
 
+func handleVersion(galaBin string) http.HandlerFunc {
+	// Cache the version at startup
+	var version string
+	cmd := exec.Command(galaBin, "version")
+	if out, err := cmd.Output(); err == nil {
+		version = strings.TrimSpace(string(out))
+	} else {
+		version = "unknown"
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]string{"version": version})
+	}
+}
+
 func writeJSON(w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(v)
@@ -198,6 +213,7 @@ func main() {
 	// API routes
 	mux.HandleFunc("/api/run", handleRun(galaBin))
 	mux.HandleFunc("/api/examples", handleExamples)
+	mux.HandleFunc("/api/version", handleVersion(galaBin))
 
 	// Static files
 	staticFS, _ := fs.Sub(staticFiles, "static")

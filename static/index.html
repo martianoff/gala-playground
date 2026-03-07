@@ -372,7 +372,7 @@
         </div>
         <div class="status">
             <div class="status-dot"></div>
-            <span>GALA Playground</span>
+            <span id="galaVersion">GALA Playground</span>
         </div>
     </div>
 
@@ -602,9 +602,23 @@
             document.body.style.userSelect = '';
         });
 
+        // Load GALA version
+        async function loadVersion() {
+            try {
+                const resp = await fetch('/api/version');
+                const data = await resp.json();
+                if (data.version) {
+                    document.getElementById('galaVersion').textContent = 'GALA ' + data.version;
+                }
+            } catch (e) {
+                console.error('Failed to load version:', e);
+            }
+        }
+
         // Init
         updateLineNumbers();
         loadExamples();
+        loadVersion();
     </script>
 </body>
 </html>

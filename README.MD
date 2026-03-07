@@ -7,6 +7,8 @@
 
 A web-based playground for the [GALA programming language](https://github.com/martianoff/gala), inspired by [Go Playground](https://go.dev/play/). Write and run GALA code directly in your browser.
 
+**Try it live: [gala-playground.fly.dev](https://gala-playground.fly.dev)**
+
 ![GALA Playground Screenshot](https://github.com/user-attachments/assets/placeholder-screenshot.png)
 
 ---

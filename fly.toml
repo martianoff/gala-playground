@@ -7,6 +7,10 @@ app = 'gala-playground'
 primary_region = 'lax'
 
 [build]
+  image = 'maxmtmn/gala-playground:latest'
+
+[env]
+  BIND_ALL = '1'
 
 [http_service]
   internal_port = 3000
@@ -17,7 +21,7 @@ primary_region = 'lax'
   processes = ['app']
 
 [[vm]]
-  memory = '1gb'
+  memory = '2gb'
   cpu_kind = 'shared'
-  cpus = 1
-  memory_mb = 256
+  cpus = 2
+  memory_mb = 2048
