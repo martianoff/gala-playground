@@ -9,8 +9,6 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 **Try it live: [gala-playground.fly.dev](https://gala-playground.fly.dev)**
 
-![GALA Playground Screenshot](https://github.com/user-attachments/assets/placeholder-screenshot.png)
-
 ---
 
 ## Features
