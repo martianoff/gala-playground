@@ -1,0 +1,41 @@
+package main
+
+import (
+    "fmt"
+    . "martianoff/gala/collection_immutable"
+)
+
+// Immutable HashMap: all operations return new maps,
+// leaving the original unchanged.
+
+func main() {
+    fmt.Println("=== Immutable HashMap ===")
+
+    // Build a word frequency counter functionally
+    val words = ArrayOf("gala", "is", "functional", "gala", "is",
+                        "fast", "gala", "rocks", "functional")
+
+    val freq = words.FoldLeft(EmptyHashMap[string, int](), (m, w) =>
+        m.Put(w, m.GetOrElse(w, 0) + 1))
+
+    fmt.Println("Word frequencies:")
+    freq.Sorted().ForEach((entry) => {
+        val (word, count) = entry
+        fmt.Printf("  %-12s %d\n", word, count)
+    })
+
+    // Immutability proof
+    val original = EmptyHashMap[string, int]()
+        .Put("a", 1).Put("b", 2).Put("c", 3)
+
+    val modified = original.Put("d", 4).Remove("a")
+
+    fmt.Printf("\nOriginal: size=%d, has 'a'=%v\n",
+        original.Size(), original.Contains("a"))
+    fmt.Printf("Modified: size=%d, has 'a'=%v, has 'd'=%v\n",
+        modified.Size(), modified.Contains("a"), modified.Contains("d"))
+
+    // MapValues
+    val doubled = original.MapValues((v) => v * 2)
+    fmt.Printf("Doubled:  %s\n", doubled.MkString(", "))
+}

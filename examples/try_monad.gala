@@ -1,0 +1,43 @@
+package main
+
+import "fmt"
+
+// Try[T] wraps computations that may panic.
+// Panics become Failure values instead of crashing.
+
+func safeDivide(a int, b int) Try[int] = Try[int](() => {
+    if b == 0 {
+        panic("division by zero")
+    }
+    return a / b
+})
+
+func main() {
+    fmt.Println("=== Try Monad ===")
+
+    // Safe division
+    val ok = safeDivide(10, 2)
+    val fail = safeDivide(10, 0)
+
+    fmt.Println(ok match {
+        case Success(v) => fmt.Sprintf("10 / 2 = %d ✓", v)
+        case Failure(e) => fmt.Sprintf("10 / 2 → %s ✗", e.Error())
+    })
+
+    fmt.Println(fail match {
+        case Success(v) => fmt.Sprintf("10 / 0 = %d ✓", v)
+        case Failure(e) => fmt.Sprintf("10 / 0 → %s ✗", e.Error())
+    })
+
+    // Chaining with Map
+    val chained = safeDivide(100, 5).Map((v) => v * 10)
+    fmt.Printf("100/5 × 10 = %d\n", chained.Get())
+
+    // Recovery
+    val recovered = safeDivide(1, 0).Recover((e) => -1)
+    fmt.Printf("1/0 recovered to: %d\n", recovered.Get())
+
+    // GetOrElse
+    val safe = safeDivide(1, 0).GetOrElse(0)
+    fmt.Printf("1/0 or else 0: %d\n", safe)
+}

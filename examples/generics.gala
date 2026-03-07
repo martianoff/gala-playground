@@ -1,0 +1,49 @@
+package main
+
+import "fmt"
+
+// GALA generics use square brackets [T any].
+// Combined with expression-bodied functions,
+// code is concise and type-safe.
+
+// Generic identity function
+func identity[T any](x T) T = x
+
+// Generic clamp
+func clamp[T any](v T, lo T, hi T) T =
+    if (std.CompareValues(v, lo) < 0) lo
+    else if (std.CompareValues(v, hi) > 0) hi
+    else v
+
+// Generic struct with methods
+type Box[T any] struct { Value T }
+
+func (b Box[T]) Map[U any](f func(T) U) Box[U] =
+    Box[U](Value = f(b.Value))
+
+func (b Box[T]) String() string =
+    fmt.Sprintf("Box(%v)", b.Value)
+
+func main() {
+    fmt.Println("=== Generics ===")
+
+    // Identity works with any type
+    fmt.Println(identity(42))
+    fmt.Println(identity("hello"))
+
+    // Clamp works with any comparable type
+    fmt.Printf("clamp(150, 0, 100) = %d\n", clamp(150, 0, 100))
+    fmt.Printf("clamp(-5, 0, 100)  = %d\n", clamp(-5, 0, 100))
+    fmt.Printf("clamp(\"z\", \"a\", \"m\") = %s\n", clamp("z", "a", "m"))
+
+    // Box with Map
+    val intBox = Box[int](Value = 42)
+    val strBox = intBox.Map((n) => fmt.Sprintf("value=%d", n))
+    fmt.Printf("%s → Map → %s\n", intBox.String(), strBox.String())
+
+    // Chained transformations
+    val result = Box[int](Value = 5)
+        .Map((n) => n * n)
+        .Map((n) => fmt.Sprintf("squared=%d", n))
+    fmt.Println(result.String())
+}

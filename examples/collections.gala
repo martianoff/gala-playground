@@ -1,0 +1,40 @@
+package main
+
+import (
+    "fmt"
+    . "martianoff/gala/collection_immutable"
+)
+
+// GALA collections are immutable and provide
+// a rich functional API: Map, Filter, FoldLeft, etc.
+
+struct Employee(Name string, Department string, Salary float64)
+
+func main() {
+    val team = ArrayOf(
+        Employee("Alice",   "Engineering", 130000.0),
+        Employee("Bob",     "Engineering", 120000.0),
+        Employee("Charlie", "Marketing",   95000.0),
+        Employee("Diana",   "Engineering", 145000.0),
+        Employee("Eve",     "Marketing",   105000.0),
+    )
+
+    // Filter engineers
+    val engineers = team.Filter((e) => e.Department == "Engineering")
+    fmt.Printf("Engineers: %s\n", engineers.Map((e) => e.Name).MkString(", "))
+
+    // Calculate average salary
+    val avg = engineers.FoldLeft(0.0, (acc, e) => acc + e.Salary) / float64(engineers.Size())
+    fmt.Printf("Avg salary: $%.0f\n", avg)
+
+    // Find top earner
+    val top = team.FoldLeft(team.Head(), (best, e) =>
+        if (e.Salary > best.Salary) e else best)
+    fmt.Printf("Top earner: %s ($%.0f)\n", top.Name, top.Salary)
+
+    // Chained pipeline
+    val highEarners = team
+        .Filter((e) => e.Salary >= 110000.0)
+        .Map((e) => fmt.Sprintf("%s: $%.0fk", e.Name, e.Salary/1000.0))
+    fmt.Printf("High earners: %s\n", highEarners.MkString(", "))
+}
