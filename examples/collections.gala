@@ -1,9 +1,6 @@
 package main
 
-import (
-    "fmt"
-    . "martianoff/gala/collection_immutable"
-)
+import . "martianoff/gala/collection_immutable"
 
 // GALA collections are immutable and provide
 // a rich functional API: Map, Filter, FoldLeft, etc.
@@ -21,20 +18,20 @@ func main() {
 
     // Filter engineers
     val engineers = team.Filter((e) => e.Department == "Engineering")
-    fmt.Printf("Engineers: %s\n", engineers.Map((e) => e.Name).MkString(", "))
+    Println(s"Engineers: ${engineers.Map((e) => e.Name).MkString(", ")}")
 
     // Calculate average salary
     val avg = engineers.FoldLeft(0.0, (acc, e) => acc + e.Salary) / float64(engineers.Size())
-    fmt.Printf("Avg salary: $%.0f\n", avg)
+    Println(f"Avg salary: $$$avg%.0f")
 
     // Find top earner
     val top = team.FoldLeft(team.Head(), (best, e) =>
         if (e.Salary > best.Salary) e else best)
-    fmt.Printf("Top earner: %s ($%.0f)\n", top.Name, top.Salary)
+    Println(f"Top earner: ${top.Name} ($$${ top.Salary }%.0f)")
 
     // Chained pipeline
     val highEarners = team
         .Filter((e) => e.Salary >= 110000.0)
-        .Map((e) => fmt.Sprintf("%s: $%.0fk", e.Name, e.Salary/1000.0))
-    fmt.Printf("High earners: %s\n", highEarners.MkString(", "))
+        .Map((e) => f"${e.Name}: $$${ e.Salary / 1000.0 }%.0fk")
+    Println(s"High earners: ${highEarners.MkString(", ")}")
 }

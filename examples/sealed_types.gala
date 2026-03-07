@@ -1,9 +1,6 @@
 package main
 
-import (
-    "fmt"
-    . "martianoff/gala/go_interop"
-)
+import . "martianoff/gala/go_interop"
 
 // Sealed types define algebraic data types (ADTs).
 // The compiler auto-generates constructors, pattern matching,
@@ -23,9 +20,9 @@ func area(s Shape) float64 = s match {
 }
 
 func describe(s Shape) string = s match {
-    case Circle(r)       => fmt.Sprintf("Circle(r=%.1f)", r)
-    case Rectangle(w, h) => fmt.Sprintf("Rectangle(%.0fx%.0f)", w, h)
-    case Triangle(b, h)  => fmt.Sprintf("Triangle(b=%.1f, h=%.1f)", b, h)
+    case Circle(r)       => f"Circle(r=$r%.1f)"
+    case Rectangle(w, h) => f"Rectangle($w%.0fx$h%.0f)"
+    case Triangle(b, h)  => f"Triangle(b=$b%.1f, h=$h%.1f)"
 }
 
 func main() {
@@ -36,6 +33,6 @@ func main() {
     )
 
     for _, s := range shapes {
-        fmt.Printf("%s → area = %.2f\n", describe(s), area(s))
+        Println(f"${describe(s)} → area = ${area(s)}%.2f")
     }
 }

@@ -1,9 +1,6 @@
 package main
 
-import (
-    "fmt"
-    . "martianoff/gala/go_interop"
-)
+import . "martianoff/gala/go_interop"
 
 // Option[T] eliminates null pointer errors.
 // Either[A, B] enables railway-oriented error handling.
@@ -16,36 +13,36 @@ func findUser(name string) Option[string] = name match {
 
 func validateAge(age int) Either[string, int] =
     if (age >= 0 && age <= 150) Right[string, int](age)
-    else Left[string, int](fmt.Sprintf("Invalid age: %d", age))
+    else Left[string, int](s"Invalid age: $age")
 
 func main() {
     // Option: safe lookups
-    fmt.Println("=== Option Monad ===")
+    Println("=== Option Monad ===")
 
     val users = SliceOf("alice", "bob", "charlie")
     for _, name := range users {
         val result = findUser(name)
         val msg = result match {
-            case Some(email) => fmt.Sprintf("  %s → %s", name, email)
-            case None()      => fmt.Sprintf("  %s → not found", name)
+            case Some(email) => s"  $name → $email"
+            case None()      => s"  $name → not found"
         }
-        fmt.Println(msg)
+        Println(msg)
     }
 
     // Map + GetOrElse chain
     val email = findUser("alice").Map((e) => "Email: " + e).GetOrElse("N/A")
-    fmt.Println(email)
+    Println(email)
 
     // Either: validation
-    fmt.Println("\n=== Either (Validation) ===")
+    Println("\n=== Either (Validation) ===")
 
     val ages = SliceOf(25, -1, 200, 42)
     for _, age := range ages {
         val result = validateAge(age)
         val msg = result match {
-            case Right(a) => fmt.Sprintf("  age %d ✓", a)
-            case Left(e)  => fmt.Sprintf("  %s ✗", e)
+            case Right(a) => s"  age $a ✓"
+            case Left(e)  => s"  $e ✗"
         }
-        fmt.Println(msg)
+        Println(msg)
     }
 }

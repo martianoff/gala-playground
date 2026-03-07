@@ -1,9 +1,6 @@
 package main
 
-import (
-    "fmt"
-    . "martianoff/gala/go_interop"
-)
+import . "martianoff/gala/go_interop"
 
 // GALA pattern matching supports:
 // - Literal patterns
@@ -27,8 +24,8 @@ func (e Even) Unapply(i int) Option[int] =
     if (i % 2 == 0) Some(i) else None[int]()
 
 func describeValue(v any) string = v match {
-    case s: string => "string: \"" + s + "\""
-    case i: int    => fmt.Sprintf("int: %d (%s)", i, classify(i))
+    case s: string => s"string: \"$s\""
+    case i: int    => s"int: $i (${classify(i)})"
     case b: bool   => b match {
         case true  => "bool: true"
         case false => "bool: false"
@@ -37,27 +34,27 @@ func describeValue(v any) string = v match {
 }
 
 func main() {
-    fmt.Println("=== Pattern Matching ===")
+    Println("=== Pattern Matching ===")
 
     // Guards
     val numbers = SliceOf(-5, 0, 3, 42, 100)
     for _, n := range numbers {
-        fmt.Printf("  %4d → %s\n", n, classify(n))
+        Println(f"  $n%4d → ${classify(n)}")
     }
 
     // Custom extractors
-    fmt.Println("\n=== Custom Extractors ===")
+    Println("\n=== Custom Extractors ===")
     for i := 1; i <= 6; i++ {
         val msg = i match {
-            case Even(n) => fmt.Sprintf("  %d is even", n)
-            case _       => fmt.Sprintf("  %d is odd", i)
+            case Even(n) => s"  $n is even"
+            case _       => s"  $i is odd"
         }
-        fmt.Println(msg)
+        Println(msg)
     }
 
     // Type matching
-    fmt.Println("\n=== Type Matching ===")
-    fmt.Println("  " + describeValue("hello"))
-    fmt.Println("  " + describeValue(42))
-    fmt.Println("  " + describeValue(true))
+    Println("\n=== Type Matching ===")
+    Println(s"  ${describeValue("hello")}")
+    Println(s"  ${describeValue(42)}")
+    Println(s"  ${describeValue(true)}")
 }

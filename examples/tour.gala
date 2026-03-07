@@ -1,7 +1,6 @@
 package main
 
 import (
-    "fmt"
     "strings"
     . "martianoff/gala/collection_immutable"
 )
@@ -13,21 +12,21 @@ import (
 // ---------- Banner ----------
 
 func printBanner() {
-    fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-    fmt.Println("║           GALA PLAYGROUND — Language Feature Tour           ║")
-    fmt.Println("║     Functional Programming meets Go Performance            ║")
-    fmt.Println("╚══════════════════════════════════════════════════════════════╝")
-    fmt.Println()
+    Println("╔══════════════════════════════════════════════════════════════╗")
+    Println("║           GALA PLAYGROUND — Language Feature Tour           ║")
+    Println("║     Functional Programming meets Go Performance            ║")
+    Println("╚══════════════════════════════════════════════════════════════╝")
+    Println("")
 }
 
 func section(title string) {
     val bar = strings.Repeat("─", 58)
-    fmt.Println("┌" + bar + "┐")
+    Println(s"┌${bar}┐")
     val pad = 58 - len(title)
     val left = pad / 2
     val right = pad - left
-    fmt.Println("│" + strings.Repeat(" ", left) + title + strings.Repeat(" ", right) + "│")
-    fmt.Println("└" + bar + "┘")
+    Println(s"│${strings.Repeat(" ", left)}$title${strings.Repeat(" ", right)}│")
+    Println(s"└${bar}┘")
 }
 
 // ============================================================================
@@ -63,9 +62,9 @@ func (c Card) String() string {
         case King()   => "K"
         case Queen()  => "Q"
         case Jack()   => "J"
-        case Pip(v)   => fmt.Sprintf("%d", v)
+        case Pip(v)   => s"$v"
     }
-    return rankLabel + suitSymbol
+    return s"$rankLabel$suitSymbol"
 }
 
 func (c Card) Points() int = c.Rank match {
@@ -78,7 +77,7 @@ func (c Card) Points() int = c.Rank match {
 
 func demoSealedTypes() {
     section("1. Sealed Types — Algebraic Data Types")
-    fmt.Println()
+    Println("")
 
     val hand = ArrayOf(
         Card(Spades(), Ace()),
@@ -88,16 +87,16 @@ func demoSealedTypes() {
         Card(Spades(), Pip(3)),
     )
 
-    fmt.Print("  Hand: ")
-    hand.ForEach((c) => fmt.Print(c.String() + " "))
-    fmt.Println()
+    Print("  Hand: ")
+    hand.ForEach((c) => Print(s"${c.String()} "))
+    Println("")
 
     val total = hand.FoldLeft(0, (acc, c) => acc + c.Points())
-    fmt.Printf("  Total points: %d\n", total)
+    Println(s"  Total points: $total")
 
     val faces = hand.Filter((c) => c.Points() >= 10)
-    fmt.Printf("  Face cards:   %d\n", faces.Size())
-    fmt.Println()
+    Println(s"  Face cards:   ${faces.Size()}")
+    Println("")
 }
 
 // ============================================================================
@@ -117,14 +116,14 @@ func area(s Shape) float64 = s match {
 }
 
 func describe(s Shape) string = s match {
-    case Circle(r)       => fmt.Sprintf("  ● Circle    r=%.1f     area=%.2f", r, area(s))
-    case Rectangle(w, h) => fmt.Sprintf("  ■ Rectangle %0.fx%0.f   area=%.2f", w, h, area(s))
-    case Triangle(b, h)  => fmt.Sprintf("  ▲ Triangle  b=%.1f h=%.1f area=%.2f", b, h, area(s))
+    case Circle(r)       => f"  ● Circle    r=$r%.1f     area=${area(s)}%.2f"
+    case Rectangle(w, h) => f"  ■ Rectangle $w%0.fx$h%0.f   area=${area(s)}%.2f"
+    case Triangle(b, h)  => f"  ▲ Triangle  b=$b%.1f h=$h%.1f area=${area(s)}%.2f"
 }
 
 func demoPatternMatching() {
     section("2. Pattern Matching — Exhaustive & Expressive")
-    fmt.Println()
+    Println("")
 
     val shapes = ArrayOf(
         Circle(5.0),
@@ -133,10 +132,10 @@ func demoPatternMatching() {
         Circle(1.0),
     )
 
-    shapes.ForEach((s) => fmt.Println(describe(s)))
+    shapes.ForEach((s) => Println(describe(s)))
 
     val totalArea = shapes.FoldLeft(0.0, (acc, s) => acc + area(s))
-    fmt.Printf("\n  Total area: %.2f\n\n", totalArea)
+    Println(f"\n  Total area: $totalArea%.2f\n")
 }
 
 // ============================================================================
@@ -147,7 +146,7 @@ struct Employee(Name string, Department string, Salary float64)
 
 func demoCollections() {
     section("3. Functional Collections — Zero Loops Required")
-    fmt.Println()
+    Println("")
 
     val team = ArrayOf(
         Employee("Alice",   "Engineering", 130000.0),
@@ -163,30 +162,30 @@ func demoCollections() {
     val names = engineers.Map((e) => e.Name)
     val avgSalary = engineers.FoldLeft(0.0, (acc, e) => acc + e.Salary) / float64(engineers.Size())
 
-    fmt.Printf("  Engineers:      %s\n", names.MkString(", "))
-    fmt.Printf("  Avg salary:     $%.0f\n", avgSalary)
+    Println(s"  Engineers:      ${names.MkString(", ")}")
+    Println(f"  Avg salary:     $$$avgSalary%.0f")
 
     // Find the highest earner
     val topEarner = team.FoldLeft(team.Head(), (best, e) =>
         if (e.Salary > best.Salary) e else best)
-    fmt.Printf("  Top earner:     %s ($%.0f)\n", topEarner.Name, topEarner.Salary)
+    Println(f"  Top earner:     ${topEarner.Name} ($$${ topEarner.Salary }%.0f)")
 
     // Group by department — count per department
     val departments = team.Map((e) => e.Department).Distinct()
-    fmt.Print("  Departments:    ")
+    Print("  Departments:    ")
     departments.ForEach((dept) => {
         val count = team.Filter((e) => e.Department == dept).Size()
-        fmt.Printf("%s(%d) ", dept, count)
+        Print(s"$dept($count) ")
     })
-    fmt.Println()
+    Println("")
 
     // Salary histogram
-    fmt.Println("\n  Salary Distribution:")
+    Println("\n  Salary Distribution:")
     team.SortWith((a, b) => a.Salary > b.Salary).ForEach((e) => {
         val bars = int(e.Salary / 5000.0)
-        fmt.Printf("    %-10s %s $%.0fk\n", e.Name, strings.Repeat("█", bars), e.Salary/1000.0)
+        Println(f"    ${e.Name}%-10s ${strings.Repeat("█", bars)} $$${ e.Salary / 1000.0 }%.0fk")
     })
-    fmt.Println()
+    Println("")
 }
 
 // ============================================================================
@@ -198,7 +197,7 @@ func findEmployee(team Array[Employee], name string) Option[Employee] =
 
 func demoOptionMonad() {
     section("4. Option Monad — Safe Null Handling")
-    fmt.Println()
+    Println("")
 
     val team = ArrayOf(
         Employee("Alice",   "Engineering", 130000.0),
@@ -209,21 +208,21 @@ func demoOptionMonad() {
     val missing = findEmployee(team, "Zara")
 
     val msg1 = found match {
-        case Some(e) => fmt.Sprintf("  Found: %s in %s", e.Name, e.Department)
+        case Some(e) => s"  Found: ${e.Name} in ${e.Department}"
         case None()  => "  Not found"
     }
 
     val msg2 = missing match {
-        case Some(e) => fmt.Sprintf("  Found: %s", e.Name)
+        case Some(e) => s"  Found: ${e.Name}"
         case None()  => "  Zara: Not found (and that's OK — no crash!)"
     }
 
-    fmt.Println(msg1)
-    fmt.Println(msg2)
+    Println(msg1)
+    Println(msg2)
 
     // Map and GetOrElse — one-liners
     val salary = found.Map((e) => e.Salary).GetOrElse(0.0)
-    fmt.Printf("  Alice's salary via Option chain: $%.0f\n\n", salary)
+    Println(f"  Alice's salary via Option chain: $$$salary%.0f\n")
 }
 
 // ============================================================================
@@ -238,7 +237,7 @@ func validateName(name string) Either[string, string] =
 
 func demoEither() {
     section("5. Either — Elegant Error Handling")
-    fmt.Println()
+    Println("")
 
     val results = ArrayOf(
         (validateName("Alice"), validateAge(30)),
@@ -250,15 +249,15 @@ func demoEither() {
     results.ForEach((pair) => {
         val (nameResult, ageResult) = pair
         val line = nameResult match {
-            case Left(err) => fmt.Sprintf("  ✗ %s", err)
+            case Left(err) => s"  ✗ $err"
             case Right(name) => ageResult match {
-                case Left(err)  => fmt.Sprintf("  ✗ %s (name=%s)", err, name)
-                case Right(age) => fmt.Sprintf("  ✓ %s, age %d — valid!", name, age)
+                case Left(err)  => s"  ✗ $err (name=$name)"
+                case Right(age) => s"  ✓ $name, age $age — valid!"
             }
         }
-        fmt.Println(line)
+        Println(line)
     })
-    fmt.Println()
+    Println("")
 }
 
 // ============================================================================
@@ -274,7 +273,7 @@ func safeDivide(a int, b int) Try[int] = Try[int](() => {
 
 func demoTryMonad() {
     section("6. Try Monad — Catch Panics Gracefully")
-    fmt.Println()
+    Println("")
 
     val results = ArrayOf(
         ("10 / 2",  safeDivide(10, 2)),
@@ -286,18 +285,18 @@ func demoTryMonad() {
     results.ForEach((pair) => {
         val (label, result) = pair
         val msg = result match {
-            case Success(v) => fmt.Sprintf("  %-10s = %d  ✓", label, v)
-            case Failure(e) => fmt.Sprintf("  %-10s → %s  ✗ (recovered!)", label, e.Error())
+            case Success(v) => f"  $label%-10s = $v  ✓"
+            case Failure(e) => s"  ${label}          → ${e.Error()}  ✗ (recovered!)"
         }
-        fmt.Println(msg)
+        Println(msg)
     })
 
     // Chaining with Map and Recover
     val chained = safeDivide(100, 5).Map((v) => v * 10).GetOrElse(-1)
-    fmt.Printf("\n  100/5 × 10 = %d (via Try.Map chain)\n", chained)
+    Println(s"\n  100/5 × 10 = $chained (via Try.Map chain)")
 
     val recovered = safeDivide(1, 0).Recover((e) => -999)
-    fmt.Printf("  1/0 recovered to: %d\n\n", recovered.Get())
+    Println(s"  1/0 recovered to: ${recovered.Get()}\n")
 }
 
 // ============================================================================
@@ -306,7 +305,7 @@ func demoTryMonad() {
 
 func demoHashMap() {
     section("7. HashMap — Immutable Key-Value Collections")
-    fmt.Println()
+    Println("")
 
     // Build a word frequency counter functionally
     val words = ArrayOf("gala", "is", "functional", "gala", "is", "fast", "gala", "rocks", "functional", "rocks")
@@ -314,16 +313,16 @@ func demoHashMap() {
     val freq = words.FoldLeft(EmptyHashMap[string, int](), (m, w) =>
         m.Put(w, m.GetOrElse(w, 0) + 1))
 
-    fmt.Println("  Word frequencies:")
+    Println("  Word frequencies:")
     freq.Sorted().ForEach((entry) => {
         val (word, count) = entry
-        fmt.Printf("    %-12s %s (%d)\n", word, strings.Repeat("■", count), count)
+        Println(s"    ${word}            ${strings.Repeat("■", count)} ($count)"[0:40])
     })
 
     // Immutability demo
     val m1 = freq.Put("awesome", 5)
-    fmt.Printf("\n  Original map size: %d (unchanged!)\n", freq.Size())
-    fmt.Printf("  New map size:      %d (with 'awesome')\n\n", m1.Size())
+    Println(s"\n  Original map size: ${freq.Size()} (unchanged!)")
+    Println(s"  New map size:      ${m1.Size()} (with 'awesome')\n")
 }
 
 // ============================================================================
@@ -338,24 +337,24 @@ func minMax(arr Array[int]) Tuple[int, int] {
 
 func demoTuples() {
     section("8. Tuples & Destructuring")
-    fmt.Println()
+    Println("")
 
     val data = ArrayOf(42, 17, 93, 5, 68, 31, 84, 2, 56)
     val (lo, hi) = minMax(data)
 
-    fmt.Printf("  Data: %s\n", data.MkString(", "))
-    fmt.Printf("  Min:  %d\n", lo)
-    fmt.Printf("  Max:  %d\n", hi)
+    Println(s"  Data: ${data.MkString(", ")}")
+    Println(s"  Min:  $lo")
+    Println(s"  Max:  $hi")
 
     // Tuple in collections
     val pairs = ArrayOf(("Alpha", 1), ("Beta", 2), ("Gamma", 3))
-    fmt.Print("  Pairs: ")
+    Print("  Pairs: ")
     pairs.ForEach((p) => {
         val (name, id) = p
-        fmt.Printf("%s=#%d  ", name, id)
+        Print(s"$name=#$id  ")
     })
-    fmt.Println()
-    fmt.Println()
+    Println("")
+    Println("")
 }
 
 // ============================================================================
@@ -382,19 +381,18 @@ func (p Pair[A, B]) MapSecond[C any](f func(B) C) Pair[A, C] =
 
 func demoGenerics() {
     section("9. Generics & Expression-Bodied Functions")
-    fmt.Println()
+    Println("")
 
-    fmt.Printf("  square(7)           = %d\n", square(7))
-    fmt.Printf("  clamp(150, 0, 100)  = %d\n", clamp(150, 0, 100))
-    fmt.Printf("  clamp(-5, 0, 100)   = %d\n", clamp(-5, 0, 100))
-    fmt.Printf("  clamp(42, 0, 100)   = %d\n", clamp(42, 0, 100))
-    fmt.Printf("  clamp(\"z\", \"a\", \"m\") = %s\n", clamp("z", "a", "m"))
+    Println(s"  square(7)           = ${square(7)}")
+    Println(s"  clamp(150, 0, 100)  = ${clamp(150, 0, 100)}")
+    Println(s"  clamp(-5, 0, 100)   = ${clamp(-5, 0, 100)}")
+    Println(s"  clamp(42, 0, 100)   = ${clamp(42, 0, 100)}")
+    Println(s"  clamp(\"z\", \"a\", \"m\") = ${clamp("z", "a", "m")}")
 
     val p = Pair[string, int]("hello", 42)
     val p2 = p.MapFirst((s) => len(s)).MapSecond((n) => n * 2)
-    fmt.Printf("  Pair(\"%s\", %d) → MapFirst(len).MapSecond(*2) → Pair(%d, %d)\n",
-        p.First, p.Second, p2.First, p2.Second)
-    fmt.Println()
+    Println(s"  Pair(\"${p.First}\", ${p.Second}) → MapFirst(len).MapSecond(*2) → Pair(${p2.First}, ${p2.Second})")
+    Println("")
 }
 
 // ============================================================================
@@ -411,22 +409,22 @@ func classify(n int) string = n match {
 
 func demoMatchGuards() {
     section("10. Match Guards & Chained Pipelines")
-    fmt.Println()
+    Println("")
 
     val numbers = ArrayOf(-3, 0, 5, 42, 100, 7, -1, 88, 1000)
     numbers.ForEach((n) =>
-        fmt.Printf("  %5d → %s\n", n, classify(n)))
+        Println(f"  $n%5d → ${classify(n)}"))
 
     // Chained functional pipeline
-    fmt.Println()
+    Println("")
     val pipeline = ArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
         .Filter((x) => x % 2 == 0)       // keep evens
         .Map((x) => x * x)                // square them
         .Filter((x) => x > 10)            // keep > 10
-    fmt.Printf("  [1..10] → evens → squared → >10 = %s\n", pipeline.MkString(", "))
+    Println(s"  [1..10] → evens → squared → >10 = ${pipeline.MkString(", ")}")
 
     val sum = pipeline.FoldLeft(0, (acc, x) => acc + x)
-    fmt.Printf("  Sum of pipeline: %d\n\n", sum)
+    Println(s"  Sum of pipeline: $sum\n")
 }
 
 // ============================================================================
@@ -434,7 +432,7 @@ func demoMatchGuards() {
 // ============================================================================
 
 func main() {
-    fmt.Println()
+    Println("")
     printBanner()
     demoSealedTypes()
     demoPatternMatching()
@@ -447,8 +445,8 @@ func main() {
     demoGenerics()
     demoMatchGuards()
 
-    fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-    fmt.Println("║  All demos completed! GALA — where Go meets Scala.         ║")
-    fmt.Println("╚══════════════════════════════════════════════════════════════╝")
-    fmt.Println()
+    Println("╔══════════════════════════════════════════════════════════════╗")
+    Println("║  All demos completed! GALA — where Go meets Scala.         ║")
+    Println("╚══════════════════════════════════════════════════════════════╝")
+    Println("")
 }
