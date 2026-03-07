@@ -316,7 +316,7 @@ func demoHashMap() {
     Println("  Word frequencies:")
     freq.Sorted().ForEach((entry) => {
         val (word, count) = entry
-        Println(s"    ${word}            ${strings.Repeat("■", count)} ($count)"[0:40])
+        Println(f"    $word%-12s ${strings.Repeat("■", count)} ($count)")
     })
 
     // Immutability demo
