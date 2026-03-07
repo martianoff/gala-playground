@@ -1,8 +1,8 @@
-package main
-
 // GALA generics use square brackets [T any].
 // Combined with expression-bodied functions,
 // code is concise and type-safe.
+
+package main
 
 // Generic identity function
 func identity[T any](x T) T = x
