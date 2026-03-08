@@ -1,0 +1,65 @@
+package main
+
+import (
+    . "martianoff/gala/collection_immutable"
+    . "martianoff/gala/string_utils"
+)
+
+// Roman numeral to integer.
+//
+// Algorithm (functional, no loops):
+//   1. Map each character to its Roman value
+//   2. FoldLeft: if prev >= current, prepend; else prepend -2×prev to undo
+//   3. Sum the resulting list
+//
+// Example: "XIV" → [10,1,5] → foldLeft → [5,-2,1,10,0] → sum = 14
+
+func romanToInt(s string) int {
+    val romanValues = EmptyHashMap[rune, int]()
+        .Put('I', 1)
+        .Put('V', 5)
+        .Put('X', 10)
+        .Put('L', 50)
+        .Put('C', 100)
+        .Put('D', 500)
+        .Put('M', 1000)
+
+    // Convert string to Array[rune], map to values, then fold
+    val values = S(s).ToChars().Map((ch) => romanValues.GetOrElse(ch, 0))
+
+    // FoldLeft: if prev >= current just prepend;
+    // otherwise prepend current AND -2×prev (undoes the earlier addition)
+    val adjusted = values.FoldLeft(ArrayOf(0), (acc, v) => {
+        if (acc.Head() >= v) {
+            return acc.Prepend(v)
+        } else {
+            return acc.Prepend(-2 * acc.Head()).Prepend(v)
+        }
+    })
+
+    return adjusted.FoldLeft(0, (acc, x) => acc + x)
+}
+
+func main() {
+    Println("=== Roman Numeral to Integer ===\n")
+
+    val testCases = ArrayOf(
+        ("III",        3),
+        ("IV",         4),
+        ("IX",         9),
+        ("XIV",       14),
+        ("XLII",      42),
+        ("XCIX",      99),
+        ("CDXLIV",   444),
+        ("MCMXC",   1990),
+        ("MMXXVI",  2026),
+        ("MMMCMXCIX", 3999),
+    )
+
+    testCases.ForEach((tc) => {
+        val (roman, expected) = tc
+        val result = romanToInt(roman)
+        val status = if (result == expected) "✓" else "✗"
+        Println(f"  $roman%-12s → $result%4d  (expected $expected%4d) $status")
+    })
+}

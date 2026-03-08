@@ -1,0 +1,50 @@
+package main
+
+import . "martianoff/gala/stream"
+
+// Streams: lazy, potentially infinite sequences.
+// From(n) generates an infinite stream n, n+1, n+2, ...
+// Use Take(n) to materialize a finite prefix, then Fold/Map/Filter.
+
+// Functional factorial: n! = 1 * 2 * 3 * ... * n
+func factorial(n int) int =
+    From(1).Take(n).Fold(1, (acc, x) => acc * x)
+
+func main() {
+    Println("=== Functional Factorial via Streams ===\n")
+
+    // Compute factorials from 0! to 12!
+    From(0).Take(13).ForEach((n) => {
+        val fact = if (n == 0) 1 else factorial(n)
+        Println(f"  $n%2d! = $fact%10d")
+    })
+
+    // Stream pipeline: sum of squares of first 10 even numbers
+    val sumOfSquares = From(1)
+        .Filter((x) => x % 2 == 0)
+        .Take(10)
+        .Map[int]((x) => x * x)
+        .Fold(0, (acc, x) => acc + x)
+    Println(s"\n  Sum of squares of first 10 evens: $sumOfSquares")
+
+    // Fibonacci via Unfold
+    val fibs = Unfold[int, Tuple[int, int]](
+        (0, 1),
+        (state Tuple[int, int]) => Some((state.V1, (state.V2, state.V1 + state.V2))),
+    )
+    Println(s"  First 15 Fibonacci: ${fibs.Take(15).MkString(", ")}")
+
+    // Prime sieve
+    val primes = sieve(From(2)).Take(20)
+    Println(s"  First 20 primes:    ${primes.MkString(", ")}")
+}
+
+// Sieve of Eratosthenes — lazy infinite stream of primes
+func sieve(s Stream[int]) Stream[int] {
+    val head = s.Head()
+    if head.IsDefined() {
+        val p = head.Get()
+        return NewCons[int](p, () => sieve(s.Tail().Filter((x) => x % p != 0)))
+    }
+    return Empty[int]()
+}
