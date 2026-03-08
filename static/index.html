@@ -231,9 +231,10 @@
             line-height: 1.6;
             color: var(--text-dim);
             text-align: right;
+            z-index: 1;
         }
 
-        .line-numbers-inner {
+        .line-numbers div {
             padding-right: 10px;
         }
 
@@ -350,9 +351,6 @@
             <span>GALA</span> Playground
         </div>
         <div class="header-actions">
-            <button class="btn" onclick="formatCode()" title="Format code">
-                Format
-            </button>
             <button class="btn" onclick="shareCode()" title="Copy code to clipboard">
                 Share
             </button>
@@ -383,9 +381,7 @@
                 <span id="charCount">0 chars</span>
             </div>
             <div class="editor-wrap">
-                <div class="line-numbers" id="lineNumbers">
-                    <div class="line-numbers-inner" id="lineNumbersInner"></div>
-                </div>
+                <div class="line-numbers" id="lineNumbers"></div>
                 <textarea id="editor" spellcheck="false" placeholder="Write your GALA code here..."></textarea>
             </div>
         </div>
@@ -417,7 +413,6 @@
         const runBtn = document.getElementById('runBtn');
         const runIcon = document.getElementById('runIcon');
         const runText = document.getElementById('runText');
-        const lineNumbersInner = document.getElementById('lineNumbersInner');
         const lineNumbers = document.getElementById('lineNumbers');
         const charCount = document.getElementById('charCount');
         const execTime = document.getElementById('execTime');
@@ -460,19 +455,22 @@
             }
         }
 
-        // Line numbers
+        let lineCount = 0;
         function updateLineNumbers() {
             const lines = editor.value.split('\n').length;
-            let html = '';
+            if (lines === lineCount) return;
+            lineCount = lines;
+            const fragment = document.createDocumentFragment();
             for (let i = 1; i <= lines; i++) {
-                html += i + '\n';
+                const div = document.createElement('div');
+                div.textContent = i;
+                fragment.appendChild(div);
             }
-            lineNumbersInner.textContent = html;
+            lineNumbers.innerHTML = '';
+            lineNumbers.appendChild(fragment);
         }
 
         function syncScroll() {
-            lineNumbers.style.transform = `translateY(-${editor.scrollTop}px)`;
-            lineNumbersInner.style.paddingTop = '0px';
             lineNumbers.scrollTop = editor.scrollTop;
         }
 
@@ -550,17 +548,6 @@
                 runIcon.innerHTML = '&#9654;';
                 runText.textContent = 'Run';
             }
-        }
-
-        // Format (simple indent normalizer)
-        function formatCode() {
-            // Just normalize trailing whitespace and ensure final newline
-            let code = editor.value;
-            code = code.split('\n').map(l => l.trimEnd()).join('\n');
-            if (!code.endsWith('\n')) code += '\n';
-            editor.value = code;
-            updateLineNumbers();
-            updateCharCount();
         }
 
         // Share (copy to clipboard)
