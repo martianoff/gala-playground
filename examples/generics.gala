@@ -17,7 +17,7 @@ func clamp[T any](v T, lo T, hi T) T =
 type Box[T any] struct { Value T }
 
 func (b Box[T]) Map[U any](f func(T) U) Box[U] =
-    Box[U](Value = f(b.Value))
+    Box(Value = f(b.Value))
 
 func (b Box[T]) String() string =
     s"Box(${ b.Value })"
@@ -35,12 +35,12 @@ func main() {
     Println(s"clamp(\"z\", \"a\", \"m\") = ${clamp("z", "a", "m")}")
 
     // Box with Map
-    val intBox = Box[int](Value = 42)
+    val intBox = Box(Value = 42)
     val strBox = intBox.Map((n) => s"value=$n")
     Println(s"${intBox.String()} → Map → ${strBox.String()}")
 
     // Chained transformations
-    val result = Box[int](Value = 5)
+    val result = Box(Value = 5)
         .Map((n) => n * n)
         .Map((n) => s"squared=$n")
     Println(result.String())

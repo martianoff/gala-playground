@@ -264,7 +264,7 @@ func demoEither() {
 //  6. Try Monad — Safe Computations
 // ============================================================================
 
-func safeDivide(a int, b int) Try[int] = Try[int](() => {
+func safeDivide(a int, b int) Try[int] = Try(() => {
     if b == 0 {
         panic("division by zero")
     }

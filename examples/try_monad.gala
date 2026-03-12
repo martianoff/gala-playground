@@ -3,7 +3,7 @@ package main
 // Try[T] wraps computations that may panic.
 // Panics become Failure values instead of crashing.
 
-func safeDivide(a int, b int) Try[int] = Try[int](() => {
+func safeDivide(a int, b int) Try[int] = Try(() => {
     if b == 0 {
         panic("division by zero")
     }

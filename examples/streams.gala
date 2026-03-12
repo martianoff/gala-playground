@@ -41,6 +41,6 @@ func main() {
 
 // Sieve of Eratosthenes — lazy infinite stream of primes
 func sieve(s Stream[int]) Stream[int] = s.Head() match {
-    case Some(p) => NewCons[int](p, () => sieve(s.Tail().Filter((x) => x % p != 0)))
+    case Some(p) => NewCons(p, () => sieve(s.Tail().Filter((x) => x % p != 0)))
     case None()  => Empty[int]()
 }
