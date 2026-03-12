@@ -1,6 +1,6 @@
 package main
 
-import . "martianoff/gala/go_interop"
+import . "martianoff/gala/collection_immutable"
 
 // GALA pattern matching supports:
 // - Literal patterns
@@ -37,10 +37,8 @@ func main() {
     Println("=== Pattern Matching ===")
 
     // Guards
-    val numbers = SliceOf(-5, 0, 3, 42, 100)
-    for _, n := range numbers {
-        Println(f"  $n%4d → ${classify(n)}")
-    }
+    val numbers = ArrayOf(-5, 0, 3, 42, 100)
+    numbers.ForEach((n) => Println(f"  $n%4d → ${classify(n)}"))
 
     // Custom extractors
     Println("\n=== Custom Extractors ===")

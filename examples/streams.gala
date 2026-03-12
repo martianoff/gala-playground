@@ -23,14 +23,14 @@ func main() {
     val sumOfSquares = From(1)
         .Filter((x) => x % 2 == 0)
         .Take(10)
-        .Map[int]((x) => x * x)
+        .Map((x) => x * x)
         .Fold(0, (acc, x) => acc + x)
     Println(s"\n  Sum of squares of first 10 evens: $sumOfSquares")
 
     // Fibonacci via Unfold
     val fibs = Unfold[int, Tuple[int, int]](
         (0, 1),
-        (state Tuple[int, int]) => Some((state.V1, (state.V2, state.V1 + state.V2))),
+        (state) => Some((state.V1, (state.V2, state.V1 + state.V2))),
     )
     Println(s"  First 15 Fibonacci: ${fibs.Take(15).MkString(", ")}")
 
@@ -40,11 +40,7 @@ func main() {
 }
 
 // Sieve of Eratosthenes — lazy infinite stream of primes
-func sieve(s Stream[int]) Stream[int] {
-    val head = s.Head()
-    if head.IsDefined() {
-        val p = head.Get()
-        return NewCons[int](p, () => sieve(s.Tail().Filter((x) => x % p != 0)))
-    }
-    return Empty[int]()
+func sieve(s Stream[int]) Stream[int] = s.Head() match {
+    case Some(p) => NewCons[int](p, () => sieve(s.Tail().Filter((x) => x % p != 0)))
+    case None()  => Empty[int]()
 }

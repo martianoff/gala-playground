@@ -1,6 +1,6 @@
 package main
 
-import . "martianoff/gala/go_interop"
+import . "martianoff/gala/collection_immutable"
 
 // Sealed types define algebraic data types (ADTs).
 // The compiler auto-generates constructors, pattern matching,
@@ -26,13 +26,11 @@ func describe(s Shape) string = s match {
 }
 
 func main() {
-    val shapes = SliceOf(
+    val shapes = ArrayOf(
         Circle(5.0),
         Rectangle(10.0, 4.0),
         Triangle(6.0, 3.0),
     )
 
-    for _, s := range shapes {
-        Println(f"${describe(s)} → area = ${area(s)}%.2f")
-    }
+    shapes.ForEach((s) => Println(f"${describe(s)} → area = ${area(s)}%.2f"))
 }
