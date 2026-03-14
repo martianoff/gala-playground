@@ -160,7 +160,7 @@ func findGala() Option[string] =
 
 func getGalaVersion(galaBin string) string =
     Try(() => exec.Command(galaBin, "version").Output())
-        .Map((out) => strings.TrimSpace(string(out)))
+        .Map((out) => strings.TrimSpace(strings.Split(string(out), "\n")[0]))
         .GetOrElse("unknown")
 
 // --- Helpers ---
