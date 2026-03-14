@@ -1,6 +1,9 @@
 package main
 
-import . "martianoff/gala/collection_immutable"
+import (
+    . "martianoff/gala/collection_immutable"
+    . "martianoff/gala/stream"
+)
 
 // GALA pattern matching supports:
 // - Literal patterns
@@ -42,13 +45,13 @@ func main() {
 
     // Custom extractors
     Println("\n=== Custom Extractors ===")
-    for i := 1; i <= 6; i++ {
+    From(1).Take(6).ForEach((i) => {
         val msg = i match {
             case Even(n) => s"  $n is even"
             case _       => s"  $i is odd"
         }
         Println(msg)
-    }
+    })
 
     // Type matching
     Println("\n=== Type Matching ===")

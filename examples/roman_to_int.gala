@@ -29,13 +29,9 @@ func romanToInt(s string) int {
 
     // FoldLeft: if prev >= current just prepend;
     // otherwise prepend current AND -2×prev (undoes the earlier addition)
-    val adjusted = values.FoldLeft(ArrayOf(0), (acc, v) => {
-        if (acc.Head() >= v) {
-            return acc.Prepend(v)
-        } else {
-            return acc.Prepend(-2 * acc.Head()).Prepend(v)
-        }
-    })
+    val adjusted = values.FoldLeft(ArrayOf(0), (acc, v) =>
+        if (acc.Head() >= v) acc.Prepend(v)
+        else acc.Prepend(-2 * acc.Head()).Prepend(v))
 
     return adjusted.FoldLeft(0, (acc, x) => acc + x)
 }

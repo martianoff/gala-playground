@@ -1,0 +1,221 @@
+package main
+
+import (
+    . "martianoff/gala-server"
+    . "martianoff/gala/collection_immutable"
+    "encoding/json"
+    "context"
+    "os"
+    "os/exec"
+    "path/filepath"
+    "runtime"
+    "strings"
+    "time"
+)
+
+embed val indexHTML = "static/index.html"
+
+embed val exampleFiles EmbeddedFS = "examples/*"
+
+// --- Types ---
+
+struct RunResult(Output string, Error string, Time string)
+
+// --- Example names ---
+
+val exampleNames = ArrayOf(
+    "collections",
+    "generics",
+    "hashmap",
+    "hello",
+    "option_either",
+    "pattern_matching",
+    "roman_to_int",
+    "sealed_types",
+    "streams",
+    "tour",
+    "try_monad",
+)
+
+// --- Handlers ---
+
+func handleIndex(req Request) Response = Html(indexHTML)
+
+func handleRun(galaBin string, req Request) Response {
+    val body = req.Body()
+
+    // Go interop: Decode requires mutable pointer target
+    var parsed map[string]string
+    val decoder = json.NewDecoder(strings.NewReader(body))
+    val err = decoder.Decode(&parsed)
+    if err != nil {
+        return Json(s"{\"error\": \"Invalid request\"}")
+    }
+
+    val code = parsed["code"]
+    val result = runGalaCode(galaBin, code)
+
+    if result.Error != "" {
+        val errJson = jsonEscape(result.Error)
+        return Json(s"{\"error\": \"$errJson\", \"time\": \"${result.Time}\"}")
+    }
+
+    val outJson = jsonEscape(result.Output)
+    return Json(s"{\"output\": \"$outJson\", \"time\": \"${result.Time}\"}")
+}
+
+func handleExamples(req Request) Response = Json(getExamplesJSON())
+
+func handleVersion(galaBin string, req Request) Response =
+    Json(s"{\"version\": \"${getGalaVersion(galaBin)}\"}")
+
+// --- Example loading ---
+
+func exampleToJSON(name string, content string) string {
+    val titled = strings.Title(strings.ReplaceAll(name, "_", " "))
+    return s"{\"name\": \"${jsonEscape(titled)}\", \"code\": \"${jsonEscape(content)}\"}"
+}
+
+func getExamplesJSON() string {
+    val examples = exampleNames.FoldLeft(EmptyArray[string](), (acc, name) => {
+        return exampleFiles.ReadString(s"examples/$name.gala") match {
+            case Success(content) => acc.Append(exampleToJSON(name, content))
+            case Failure(_) => acc
+        }
+    })
+
+    return s"[${strings.Join(examples.ToGoSlice(), ",")}]"
+}
+
+// --- Code execution ---
+
+func runGalaCode(galaBin string, code string) RunResult {
+    if len(code) > 50000 {
+        return RunResult(Output = "", Error = "Code too large (max 50KB)", Time = "")
+    }
+
+    return Try(() => os.MkdirTemp("", "gala-playground-*")) match {
+        case Failure(_) => RunResult(Output = "", Error = "Failed to create temp directory", Time = "")
+        case Success(tmpDir) => {
+            val result = prepareAndRun(galaBin, tmpDir, code)
+            os.RemoveAll(tmpDir)
+            return result
+        }
+    }
+}
+
+func prepareAndRun(galaBin string, tmpDir string, code string) RunResult {
+    val setup = Try(() => {
+        val srcFile = os.Create(filepath.Join(tmpDir, "main.gala"))
+        srcFile.WriteString(code)
+        srcFile.Close()
+        val modFile = os.Create(filepath.Join(tmpDir, "gala.mod"))
+        modFile.WriteString("module playground\n\ngala 0.15.0\n")
+        modFile.Close()
+        return true
+    })
+
+    return setup match {
+        case Failure(_) => RunResult(Output = "", Error = "Failed to write source files", Time = "")
+        case Success(_) => {
+            val ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+
+            val cmd = exec.CommandContext(ctx, galaBin, "run", tmpDir)
+            cmd.Dir = tmpDir
+
+            val start = time.Now()
+            // Go interop: CombinedOutput returns useful data in both output and error
+            val output, cmdErr = cmd.CombinedOutput()
+            val elapsed = time.Since(start)
+            val timeStr = f"${elapsed.Seconds()}%.3fs"
+
+            cancel()
+
+            if cmdErr != nil {
+                if ctx.Err() == context.DeadlineExceeded {
+                    return RunResult(Output = "", Error = "Execution timed out (30s limit)", Time = timeStr)
+                }
+                return RunResult(Output = "", Error = string(output), Time = timeStr)
+            }
+
+            return RunResult(Output = string(output), Error = "", Time = timeStr)
+        }
+    }
+}
+
+// --- GALA binary discovery ---
+
+func findGala() Option[string] =
+    ArrayOf(
+        filepath.Join(os.Getenv("USERPROFILE"), ".local", "bin", "gala.exe"),
+        filepath.Join(os.Getenv("USERPROFILE"), ".local", "bin", "gala"),
+        filepath.Join(os.Getenv("HOME"), ".local", "bin", "gala.exe"),
+        filepath.Join(os.Getenv("HOME"), ".local", "bin", "gala"),
+    )
+        .Find((c) => Try(() => os.Stat(c)).IsSuccess())
+        .OrElse(
+            Try(() => exec.LookPath("gala"))
+                .OrElse(Try(() => exec.LookPath("gala.exe")))
+                .ToOption())
+
+func getGalaVersion(galaBin string) string =
+    Try(() => exec.Command(galaBin, "version").Output())
+        .Map((out) => strings.TrimSpace(string(out)))
+        .GetOrElse("unknown")
+
+// --- Helpers ---
+
+func jsonEscape(s string) string =
+    Try(() => json.Marshal(s))
+        .Map((b) => strings.Trim(string(b), "\""))
+        .GetOrElse(s)
+
+func openBrowser(url string) {
+    val cmd = runtime.GOOS match {
+        case "windows" => exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+        case "darwin" => exec.Command("open", url)
+        case _ => exec.Command("xdg-open", url)
+    }
+    // Best-effort: browser open failure is non-critical
+    _ = cmd.Start()
+}
+
+// --- Main ---
+
+func main() {
+    findGala() match {
+        case None() => Println("GALA binary not found. Install with: gala-install")
+        case Some(galaBin) => startServer(galaBin)
+    }
+}
+
+func startServer(galaBin string) {
+    Println(s"Using GALA binary: $galaBin")
+
+    val bind = os.Getenv("BIND_ALL") match {
+        case "" => "127.0.0.1"
+        case _ => "0.0.0.0"
+    }
+    val envPort = os.Getenv("PORT")
+    val port = envPort match {
+        case "" => "3000"
+        case _ => envPort
+    }
+    val addr = s"$bind:$port"
+
+    val server = NewServer().
+        WithName("GALA Playground").
+        GET("/", handleIndex).
+        POST("/api/run", (req) => handleRun(galaBin, req)).
+        GET("/api/examples", handleExamples).
+        GET("/api/version", (req) => handleVersion(galaBin, req)).
+        WithFilter(Logger()).
+        WithFilter(Recovery()).
+        WithFilter(Cors())
+
+    if bind == "127.0.0.1" {
+        openBrowser(s"http://$addr")
+    }
+
+    server.ListenOn(addr)
+}

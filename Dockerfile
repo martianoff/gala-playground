@@ -8,31 +8,32 @@
 #
 # ============================================================================
 
-# --- Stage 1: Build the playground server ---
-FROM golang:1.25.5-alpine AS builder
-
-WORKDIR /build
-
-COPY go.mod ./
-RUN go mod download
-
-COPY server.go ./
-COPY static/ ./static/
-COPY examples/ ./examples/
-
-RUN CGO_ENABLED=0 GOOS=linux \
-    go build -ldflags="-s -w" -o playground server.go
-
-# --- Stage 2: Download GALA binary from GitHub releases ---
+# --- Stage 1: Download GALA binary ---
 FROM alpine:3.21 AS gala-download
 
-ARG GALA_VERSION=0.12.0
+ARG GALA_VERSION=0.17.0
 ARG TARGETARCH=amd64
 
 RUN apk add --no-cache curl && \
     curl -fsSL -o /gala \
     "https://github.com/martianoff/gala/releases/download/v${GALA_VERSION}/gala-linux-${TARGETARCH}" && \
     chmod +x /gala
+
+# --- Stage 2: Build the playground server with GALA ---
+FROM golang:1.25.5-alpine AS builder
+
+RUN apk add --no-cache git
+
+COPY --from=gala-download /gala /usr/local/bin/gala
+
+WORKDIR /build
+
+COPY gala.mod gala.sum* go.mod go.sum* ./
+COPY main.gala ./
+COPY static/ ./static/
+COPY examples/ ./examples/
+
+RUN gala build -o playground .
 
 # --- Stage 3: Runtime image ---
 FROM golang:1.25.5-alpine
@@ -48,7 +49,7 @@ COPY --from=builder /build/playground /usr/local/bin/playground
 
 # Pre-warm: extract GALA stdlib and download Go modules so first request is fast
 RUN mkdir -p /tmp/warmup && \
-    printf 'module warmup\n\ngala 0.12.0\n' > /tmp/warmup/gala.mod && \
+    printf 'module warmup\n\ngala 0.17.0\n' > /tmp/warmup/gala.mod && \
     printf 'package main\n\nimport (\n    "fmt"\n    . "martianoff/gala/collection_immutable"\n)\n\nfunc main() {\n    fmt.Println(ArrayOf(1, 2, 3))\n}\n' > /tmp/warmup/main.gala && \
     gala run /tmp/warmup && \
     rm -rf /tmp/warmup

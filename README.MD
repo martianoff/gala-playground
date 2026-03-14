@@ -1,6 +1,6 @@
 # GALA Playground
 
-[![GALA](https://img.shields.io/badge/GALA-0.10.0-blue)](https://github.com/martianoff/gala)
+[![GALA](https://img.shields.io/badge/GALA-0.17.0-blue)](https://github.com/martianoff/gala)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -15,7 +15,7 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 - **Browser-based code editor** with line numbers, tab support, and resizable split panels
 - **Instant execution** -- compile and run GALA code with one click or `Ctrl+Enter`
-- **9 built-in examples** covering all major GALA features
+- **11 built-in examples** covering all major GALA features
 - **Error display** -- compile errors and runtime panics shown inline
 - **Share** -- copy code to clipboard with one click
 - **Dark theme** -- developer-friendly IDE-like interface
@@ -24,7 +24,7 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 | Example | Features Showcased |
 |---------|--------------------|
-| Hello | Basic syntax, `fmt`, `func main()` |
+| Hello | Basic syntax, `Println`, `func main()` |
 | Sealed Types | ADTs, exhaustive pattern matching, expression functions |
 | Pattern Matching | Guards, custom extractors (`Unapply`), type matching |
 | Collections | `Array`, `Filter`, `Map`, `FoldLeft`, functional pipelines |
@@ -32,6 +32,8 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 | Try Monad | Panic recovery, `Map` chaining, `Recover`, `GetOrElse` |
 | HashMap | Immutable maps, `FoldLeft` word counter, `Sorted`, `MapValues` |
 | Generics | Type parameters, generic structs, generic methods |
+| Roman to Int | String processing, `FoldLeft`, `match` on characters |
+| Streams | Lazy evaluation, infinite sequences, `Take`, `Filter`, `Map` |
 | Tour | Full 10-section showcase with formatted output |
 
 ---
@@ -40,7 +42,7 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 ### Local
 
-Requires [Go 1.25+](https://go.dev/dl/) and the [GALA binary](https://github.com/martianoff/gala/releases).
+Requires [Go 1.25+](https://go.dev/dl/) and [GALA 0.17.0+](https://github.com/martianoff/gala/releases).
 
 ```bash
 # Install GALA
@@ -51,7 +53,7 @@ chmod +x ~/.local/bin/gala
 # Clone and run
 git clone https://github.com/martianoff/gala-playground.git
 cd gala-playground
-go run server.go
+gala run .
 ```
 
 Opens automatically at [http://localhost:3000](http://localhost:3000).
@@ -77,15 +79,18 @@ docker run -p 3000:3000 gala-playground
 
 ```
 gala-playground/
-  server.go          # Go web server (embeds static files + examples)
+  main.gala          # GALA server (uses gala-server module)
+  gala.mod           # GALA module file with dependencies
   static/
     index.html       # Single-page frontend (editor + output)
   examples/
-    hello.gala       # 9 pre-loaded GALA examples
+    hello.gala       # 11 pre-loaded GALA examples
     sealed_types.gala
     ...
-  Dockerfile         # Multi-stage build (server + GALA binary)
+  Dockerfile         # Multi-stage build (GALA build + runtime)
 ```
+
+The server is written entirely in GALA using the [`gala-server`](https://github.com/martianoff/gala-server) HTTP framework. Static files and examples are embedded at compile time using GALA's `embed val` directives.
 
 ### How It Works
 
@@ -114,12 +119,11 @@ gala-playground/
 
 ## Docker Details
 
-The Dockerfile uses a 3-stage multi-stage build:
+The Dockerfile uses a multi-stage build:
 
 | Stage | Base Image | Purpose |
 |-------|------------|---------|
-| `builder` | `golang:1.25.5-alpine` | Compiles the playground Go server |
-| `gala-download` | `alpine:3.21` | Downloads GALA binary from GitHub releases |
+| `builder` | `golang:1.25.5-alpine` | Downloads GALA and compiles `main.gala` via `gala build` |
 | Runtime | `golang:1.25.5-alpine` | Runs both the server and `gala run` |
 
 The runtime image includes Go because `gala run` invokes `go build` internally. The GALA stdlib and Go module cache are pre-warmed during the Docker build so the first user request is fast.
