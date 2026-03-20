@@ -15,7 +15,7 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 - **Browser-based code editor** with line numbers, tab support, and resizable split panels
 - **Instant execution** -- compile and run GALA code with one click or `Ctrl+Enter`
-- **11 built-in examples** covering all major GALA features
+- **15 built-in examples** covering all major GALA features
 - **Error display** -- compile errors and runtime panics shown inline
 - **Share** -- copy code to clipboard with one click
 - **Dark theme** -- developer-friendly IDE-like interface
@@ -34,6 +34,10 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 | Generics | Type parameters, generic structs, generic methods |
 | Roman to Int | String processing, `FoldLeft`, `match` on characters |
 | Streams | Lazy evaluation, infinite sequences, `Take`, `Filter`, `Map` |
+| Named Arguments | Default params, named args in any order, `Copy` overrides |
+| JSON | `JsonStringify`, `JsonParse`, `Json[T]` extractor, `Collect` |
+| Regex | Capture groups via `Unapply` + `Array` destructuring, `FindAll` |
+| IO Effects | `IO[T]` monad, `Suspend`, `Map`/`FlatMap`, `Recover`, `AndThen` |
 | Tour | Full 10-section showcase with formatted output |
 
 ---
@@ -84,7 +88,7 @@ gala-playground/
   static/
     index.html       # Single-page frontend (editor + output)
   examples/
-    hello.gala       # 11 pre-loaded GALA examples
+    hello.gala       # 15 pre-loaded GALA examples
     sealed_types.gala
     ...
   Dockerfile         # Multi-stage build (GALA build + runtime)
