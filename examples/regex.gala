@@ -1,0 +1,96 @@
+package main
+
+import (
+    . "martianoff/gala/collection_immutable"
+    "martianoff/gala/regex"
+)
+
+// ============================================================================
+//  Regular Expressions & Pattern Matching
+// ============================================================================
+//  GALA regex supports Unapply — use regex in match expressions to
+//  extract capture groups via Array destructuring.
+
+func main() {
+    Println("=== Regex Pattern Matching ===")
+    Println("")
+
+    // Date extraction with capture groups
+    val dateRegex = regex.MustCompile("(\\d{4})-(\\d{2})-(\\d{2})")
+
+    val dates = ArrayOf("2024-01-15", "Meeting at 3pm", "2025-12-25", "no date here")
+    dates.ForEach((input) => {
+        val result = input match {
+            case dateRegex(Array(year, month, day)) =>
+                s"  ✓ \"$input\" → year=$year month=$month day=$day"
+            case _ =>
+                s"  ✗ \"$input\" → no date found"
+        }
+        Println(result)
+    })
+    Println("")
+
+    // Email parsing with destructuring
+    Println("=== Email Extraction ===")
+    Println("")
+
+    val emailRegex = regex.MustCompile("([\\w.+-]+)@([\\w.-]+)")
+
+    val emails = ArrayOf("alice@gala.dev", "bob+tag@example.com", "not-an-email", "carol@test.org")
+    emails.ForEach((input) => {
+        val result = input match {
+            case emailRegex(Array(user, domain)) =>
+                s"  ✓ user=\"$user\"  domain=\"$domain\""
+            case _ =>
+                s"  ✗ \"$input\" is not an email"
+        }
+        Println(result)
+    })
+    Println("")
+
+    // URL parsing with multiple capture groups
+    Println("=== URL Parsing ===")
+    Println("")
+
+    val urlRegex = regex.MustCompile("(https?)://([^/]+)(/.*)?" )
+    val urls = ArrayOf("https://gala-lang.dev/docs", "http://localhost:8080", "not a url")
+    urls.ForEach((input) => {
+        val result = input match {
+            case urlRegex(Array(scheme, host, path)) =>
+                s"  ✓ scheme=$scheme  host=$host  path=$path"
+            case urlRegex(Array(scheme, host)) =>
+                s"  ✓ scheme=$scheme  host=$host  path=/"
+            case _ =>
+                s"  ✗ \"$input\""
+        }
+        Println(result)
+    })
+    Println("")
+
+    // Basic regex operations
+    Println("=== Regex Operations ===")
+    Println("")
+
+    val digits = regex.MustCompile("\\d+")
+
+    Println(s"  Matches \"abc123\":     ${digits.Matches("abc123")}")
+    Println(s"  Matches \"no digits\":  ${digits.Matches("no digits")}")
+    Println(s"  FindFirst \"a 42 b\":   ${digits.FindFirst("a 42 b").Get()}")
+    Println(s"  ReplaceAll:           ${digits.ReplaceAll("Call 555-1234 or 555-5678", "***")}")
+    Println("")
+
+    // FindAll
+    val found = digits.FindAll("Score: 98, 85, 92, 77")
+    Println(s"  FindAll scores: ${found.MkString(", ")}")
+    Println("")
+
+    // Safe compilation — bad regex returns Failure
+    Println("=== Safe Compilation ===")
+    Println("")
+
+    val good = regex.Compile("\\d+")
+    val bad  = regex.Compile("[invalid")
+    Println(s"  Compile \"\\d+\":      isSuccess=${good.IsSuccess()}")
+    Println(s"  Compile \"[invalid\": isSuccess=${bad.IsSuccess()}")
+    Println("")
+}

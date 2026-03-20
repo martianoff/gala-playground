@@ -1,0 +1,100 @@
+package main
+
+import (
+    . "martianoff/gala/collection_immutable"
+)
+
+// ============================================================================
+//  Named Arguments & Default Parameters
+// ============================================================================
+//  GALA supports named arguments at call sites and default parameter values.
+//  Named arguments can appear in any order — the compiler reorders them.
+
+// --- Default Parameters ---
+
+func greet(name string, greeting string = "Hello", punctuation string = "!") string =
+    s"$greeting, $name$punctuation"
+
+func connect(host string, port int = 8080, secure bool = true) string {
+    val scheme = if (secure) "https" else "http"
+    return s"$scheme://$host:$port"
+}
+
+// --- Named Arguments with Structs ---
+
+struct Config(Host string, Port int, MaxConns int, Verbose bool)
+
+func showConfig(c Config) string =
+    s"  ${c.Host}:${c.Port} (max=${c.MaxConns}, verbose=${c.Verbose})"
+
+// --- Copy with Named Arguments ---
+
+struct Point(X int, Y int)
+
+func (p Point) String() string = s"(${ p.X }, ${ p.Y })"
+
+// --- Named Arguments in Method Chains ---
+
+struct Query(Table string, Limit int, Offset int, OrderBy string)
+
+func newQuery(table string, limit int = 100, offset int = 0, orderBy string = "id") Query =
+    Query(Table = table, Limit = limit, Offset = offset, OrderBy = orderBy)
+
+func (q Query) String() string =
+    s"SELECT * FROM ${q.Table} ORDER BY ${q.OrderBy} LIMIT ${q.Limit} OFFSET ${q.Offset}"
+
+func main() {
+    Println("=== Default Parameters ===")
+    Println("")
+
+    Println(s"  greet(\"Alice\")                     → ${greet("Alice")}")
+    Println(s"  greet(\"Bob\", \"Hi\")                 → ${greet("Bob", "Hi")}")
+    Println(s"  greet(\"Carol\", \"Hey\", \"...\")       → ${greet("Carol", "Hey", "...")}")
+    Println("")
+
+    Println(s"  connect(\"api.example.com\")          → ${connect("api.example.com")}")
+    Println(s"  connect(\"localhost\", 3000)          → ${connect("localhost", 3000)}")
+    Println(s"  connect(\"localhost\", 3000, false)   → ${connect("localhost", 3000, false)}")
+    Println("")
+
+    Println("=== Named Arguments ===")
+    Println("")
+
+    // Named arguments — any order
+    Println(s"  greet(punctuation = \"?\", name = \"Dave\")  → ${greet(punctuation = "?", name = "Dave")}")
+    Println(s"  connect(\"db.local\", secure = false)      → ${connect("db.local", secure = false)}")
+    Println("")
+
+    // Struct construction with named args
+    val cfg = Config(Host = "prod.api.com", Port = 443, MaxConns = 50, Verbose = false)
+    Println("  Config with named args:")
+    Println(showConfig(cfg))
+    Println("")
+
+    Println("=== Copy with Overrides ===")
+    Println("")
+
+    val origin = Point(X = 0, Y = 0)
+    val moved  = origin.Copy(X = 10)
+    val moved2 = origin.Copy(Y = 5)
+    val moved3 = origin.Copy(X = 3, Y = 7)
+
+    Println(s"  origin          = ${origin.String()}")
+    Println(s"  origin.Copy(X=10)   = ${moved.String()}")
+    Println(s"  origin.Copy(Y=5)    = ${moved2.String()}")
+    Println(s"  origin.Copy(X=3,Y=7)= ${moved3.String()}")
+    Println("")
+
+    Println("=== Query Builder with Defaults ===")
+    Println("")
+
+    val queries = ArrayOf(
+        newQuery("users"),
+        newQuery("orders", limit = 10),
+        newQuery("products", orderBy = "name", limit = 50),
+        newQuery("logs", limit = 1000, offset = 500, orderBy = "timestamp"),
+    )
+
+    queries.ForEach((q) => Println(s"  ${q.String()}"))
+    Println("")
+}

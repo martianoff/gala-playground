@@ -1,0 +1,93 @@
+package main
+
+import (
+    "errors"
+    "martianoff/gala/io"
+)
+
+// ============================================================================
+//  IO Effect Monad — Pure Functional Side Effects
+// ============================================================================
+//  IO[T] is a lazy, composable effect type. Unlike eager evaluation,
+//  IO describes a computation without running it. Call .Run() to execute.
+//  Each .Run() re-executes the effect (not cached like Lazy[T]).
+
+func main() {
+    Println("=== IO Basics ===")
+    Println("")
+
+    // Pure values — wrap a value in IO without side effects
+    val pure = io.Of(42)
+    Println(s"  io.Of(42).Run()  = ${pure.Run().Get()}")
+
+    // Suspended computation — deferred until .Run()
+    val suspended = io.Suspend(() => 21 * 2)
+    Println(s"  Suspend(21*2)    = ${suspended.Run().Get()}")
+    Println("")
+
+    // Laziness demo — nothing happens until .Run()
+    Println("=== Laziness ===")
+    Println("")
+    Println("  Creating IO (no output yet)...")
+    val lazy = io.Suspend(() => {
+        Println("  → Computing inside IO!")
+        return 99
+    })
+    Println("  IO created. Now running:")
+    Println(s"  Result = ${lazy.Run().Get()}")
+    Println("")
+
+    // Map and FlatMap — compose IO computations
+    Println("=== Map & FlatMap ===")
+    Println("")
+
+    val doubled = io.Map[int, int](io.Of(21), (x int) => x * 2)
+    Println(s"  io.Of(21).Map(*2)       = ${doubled.Run().Get()}")
+
+    val chained = io.FlatMap[int, int](io.Of(10), (x int) => io.Of(x + 32))
+    Println(s"  io.Of(10).FlatMap(+32)  = ${chained.Run().Get()}")
+    Println("")
+
+    // Error handling — Fail and Recover
+    Println("=== Error Handling ===")
+    Println("")
+
+    val failing = io.Fail[int](errors.New("something went wrong"))
+    Println(s"  Fail.Run().IsFailure()  = ${failing.Run().IsFailure()}")
+
+    val recovered = io.Recover(failing, (err) => -1)
+    Println(s"  Recover(Fail, => -1)    = ${recovered.Run().Get()}")
+    Println("")
+
+    // Side effects — Effect wraps void actions
+    Println("=== Side Effects ===")
+    Println("")
+
+    val greet = io.Effect(() => { Println("  → Hello from IO!") })
+    Println("  Running effect:")
+    greet.Run()
+
+    // Sequencing — AndThen chains two effects
+    val program = io.AndThen[bool, string](
+        io.Effect(() => { Println("  → Step 1: setup") }),
+        io.Suspend(() => {
+            Println("  → Step 2: compute")
+            return "done"
+        }),
+    )
+    val result = program.Run().Get()
+    Println(s"  Program result: $result")
+    Println("")
+
+    // Failure propagation — FlatMap short-circuits on error
+    Println("=== Failure Propagation ===")
+    Println("")
+
+    val failChain = io.FlatMap[int, int](
+        io.Fail[int](errors.New("initial error")),
+        (x int) => io.Of(x * 2),
+    )
+    Println(s"  Fail.FlatMap(*2) runs second step: ${failChain.Run().IsSuccess()}")
+    Println(s"  Error preserved:  ${failChain.Run().IsFailure()}")
+    Println("")
+}

@@ -1,0 +1,109 @@
+package main
+
+import (
+    . "martianoff/gala/std"
+    . "martianoff/gala/collection_immutable"
+)
+
+// ============================================================================
+//  JSON Serialization & Pattern Matching
+// ============================================================================
+//  GALA provides type-safe JSON with pattern matching via the Json extractor.
+
+type Person struct {
+    var Name  string
+    var Email string
+    var Age   int
+}
+
+func main() {
+    Println("=== JSON Serialization ===")
+    Println("")
+
+    // Serialize a struct to JSON
+    val alice = Person{Name: "Alice", Email: "alice@gala.dev", Age: 30}
+    val jsonStr = JsonStringify(alice).Get()
+    Println(s"  Compact: $jsonStr")
+    Println("")
+
+    // Pretty print
+    val pretty = JsonStringifyPretty(alice).Get()
+    Println("  Pretty:")
+    Println(pretty)
+    Println("")
+
+    // Deserialize JSON back to a struct
+    Println("=== JSON Deserialization ===")
+    Println("")
+
+    val parsed = JsonParse[Person](jsonStr)
+    parsed match {
+        case Success(p) => Println(s"  Parsed: ${p.Name}, email=${p.Email}, age=${p.Age}")
+        case Failure(e) => Println(s"  Error: ${e.Error()}")
+    }
+    Println("")
+
+    // Error handling with invalid JSON
+    val bad = JsonParse[Person]("not valid json")
+    Println(s"  Parse invalid JSON: isFailure=${bad.IsFailure()}")
+    Println("")
+
+    // Pattern matching with the Json[T] extractor
+    Println("=== JSON Pattern Matching ===")
+    Println("")
+
+    // Json[T] extractor: parses and matches in one step
+    val inputs = ArrayOf(
+        "{\"Name\":\"Bob\",\"Email\":\"bob@gala.dev\",\"Age\":25}",
+        "not json at all",
+        "{\"Name\":\"Carol\",\"Email\":\"carol@gala.dev\",\"Age\":28}",
+    )
+
+    inputs.ForEach((input) => {
+        val result = input match {
+            case Json[Person](p) => s"  ✓ ${p.Name} (${p.Email}), age ${p.Age}"
+            case _               => "  ✗ Not a valid Person"
+        }
+        Println(result)
+    })
+    Println("")
+
+    // Roundtrip: serialize → deserialize → verify
+    Println("=== JSON Roundtrip ===")
+    Println("")
+
+    val bob = Person{Name: "Bob", Email: "bob@gala.dev", Age: 25}
+    val bobJson = JsonStringify(bob).Get()
+    val roundtrip = JsonParse[Person](bobJson)
+
+    roundtrip match {
+        case Success(p) => {
+            Println(s"  Original:   ${bob.Name}, ${bob.Email}, ${bob.Age}")
+            Println(s"  Roundtrip:  ${p.Name}, ${p.Email}, ${p.Age}")
+            Println(s"  Match:      ${bob.Name == p.Name && bob.Age == p.Age}")
+        }
+        case Failure(e) => Println(s"  Error: ${e.Error()}")
+    }
+    Println("")
+
+    // Batch processing with functional collections
+    Println("=== Batch Processing ===")
+    Println("")
+
+    val people = ArrayOf(
+        Person{Name: "Alice", Email: "alice@gala.dev", Age: 30},
+        Person{Name: "Bob",   Email: "bob@gala.dev",   Age: 25},
+        Person{Name: "Carol", Email: "carol@gala.dev",  Age: 28},
+    )
+
+    val jsonArray = people.Map((p) => JsonStringify(p).Get())
+    Println("  Serialized all:")
+    jsonArray.ForEach((j) => Println(s"    $j"))
+    Println("")
+
+    // Parse back and filter
+    val parsed2 = jsonArray.Map((j) => JsonParse[Person](j))
+    val adults = parsed2.Collect({ case Success(p) if p.Age >= 28 => p.Name })
+    Println(s"  People aged 28+: ${adults.MkString(", ")}")
+    Println("")
+}
