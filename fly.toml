@@ -22,6 +22,6 @@ primary_region = 'lax'
 
 [[vm]]
   memory = '2gb'
-  cpu_kind = 'shared'
+  cpu_kind = 'performance'
   cpus = 2
   memory_mb = 2048

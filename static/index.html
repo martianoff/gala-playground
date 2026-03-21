@@ -595,7 +595,7 @@
                 const resp = await fetch('/api/version');
                 const data = await resp.json();
                 if (data.version) {
-                    document.getElementById('galaVersion').textContent = 'GALA ' + data.version;
+                    document.getElementById('galaVersion').textContent = data.version;
                 }
             } catch (e) {
                 console.error('Failed to load version:', e);
