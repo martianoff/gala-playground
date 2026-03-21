@@ -2,108 +2,107 @@ package main
 
 import (
     . "martianoff/gala/std"
+    . "martianoff/gala/json"
     . "martianoff/gala/collection_immutable"
 )
 
 // ============================================================================
-//  JSON Serialization & Pattern Matching
+//  JSON Codec — Zero-Reflection Serialization & Pattern Matching
 // ============================================================================
-//  GALA provides type-safe JSON with pattern matching via the Json extractor.
+//  GALA's json.Codec[T] provides compile-time JSON serialization powered by
+//  StructMeta[T]. No reflection, no struct tags — fully typed at compile time.
 
-type Person struct {
-    var Name  string
-    var Email string
-    var Age   int
-}
+struct Person(Name string, Email string, Age int)
 
 func main() {
+    // Create a codec with snake_case naming
+    val codec = Codec[Person](SnakeCase())
+
     Println("=== JSON Serialization ===")
     Println("")
 
     // Serialize a struct to JSON
-    val alice = Person{Name: "Alice", Email: "alice@gala.dev", Age: 30}
-    val jsonStr = JsonStringify(alice).Get()
+    val alice = Person("Alice", "alice@gala.dev", 30)
+    val jsonStr = codec.Encode(alice).Get()
     Println(s"  Compact: $jsonStr")
     Println("")
 
     // Pretty print
-    val pretty = JsonStringifyPretty(alice).Get()
+    val pretty = codec.EncodePretty(alice).Get()
     Println("  Pretty:")
     Println(pretty)
     Println("")
 
-    // Deserialize JSON back to a struct
+    // Deserialize JSON back to a struct — returns Try[Person]
     Println("=== JSON Deserialization ===")
     Println("")
 
-    val parsed = JsonParse[Person](jsonStr)
-    parsed match {
-        case Success(p) => Println(s"  Parsed: ${p.Name}, email=${p.Email}, age=${p.Age}")
+    val decoded = codec.Decode(jsonStr)
+    decoded match {
+        case Success(p) => Println(s"  Decoded: ${p.Name}, email=${p.Email}, age=${p.Age}")
         case Failure(e) => Println(s"  Error: ${e.Error()}")
     }
     Println("")
 
-    // Error handling with invalid JSON
-    val bad = JsonParse[Person]("not valid json")
-    Println(s"  Parse invalid JSON: isFailure=${bad.IsFailure()}")
-    Println("")
-
-    // Pattern matching with the Json[T] extractor
+    // Pattern matching with codec extractor
     Println("=== JSON Pattern Matching ===")
     Println("")
 
-    // Json[T] extractor: parses and matches in one step
+    // Codec Unapply: decodes and matches in one step
     val inputs = ArrayOf(
-        "{\"Name\":\"Bob\",\"Email\":\"bob@gala.dev\",\"Age\":25}",
+        "{\"name\":\"Bob\",\"email\":\"bob@gala.dev\",\"age\":25}",
         "not json at all",
-        "{\"Name\":\"Carol\",\"Email\":\"carol@gala.dev\",\"Age\":28}",
+        "{\"name\":\"Carol\",\"email\":\"carol@gala.dev\",\"age\":28}",
     )
 
     inputs.ForEach((input) => {
         val result = input match {
-            case Json[Person](p) => s"  ✓ ${p.Name} (${p.Email}), age ${p.Age}"
-            case _               => "  ✗ Not a valid Person"
+            case codec(p) => s"  Found: ${p.Name} (${p.Email}), age ${p.Age}"
+            case _        => "  Not a valid Person"
         }
         Println(result)
     })
     Println("")
 
-    // Roundtrip: serialize → deserialize → verify
+    // Roundtrip: encode → decode → verify
     Println("=== JSON Roundtrip ===")
     Println("")
 
-    val bob = Person{Name: "Bob", Email: "bob@gala.dev", Age: 25}
-    val bobJson = JsonStringify(bob).Get()
-    val roundtrip = JsonParse[Person](bobJson)
+    val bob = Person("Bob", "bob@gala.dev", 25)
+    val bobJson = codec.Encode(bob).Get()
+    val roundtrip = codec.Decode(bobJson)
 
     roundtrip match {
         case Success(p) => {
             Println(s"  Original:   ${bob.Name}, ${bob.Email}, ${bob.Age}")
             Println(s"  Roundtrip:  ${p.Name}, ${p.Email}, ${p.Age}")
-            Println(s"  Match:      ${bob.Name == p.Name && bob.Age == p.Age}")
         }
         case Failure(e) => Println(s"  Error: ${e.Error()}")
     }
     Println("")
 
-    // Batch processing with functional collections
-    Println("=== Batch Processing ===")
+    // Builder pattern: Rename and Omit
+    Println("=== Builder Pattern ===")
     Println("")
 
-    val people = ArrayOf(
-        Person{Name: "Alice", Email: "alice@gala.dev", Age: 30},
-        Person{Name: "Bob",   Email: "bob@gala.dev",   Age: 25},
-        Person{Name: "Carol", Email: "carol@gala.dev",  Age: 28},
-    )
+    val publicCodec = Codec[Person](SnakeCase())
+        .Omit("Email")
+        .Rename("Name", "display_name")
 
-    val jsonArray = people.Map((p) => JsonStringify(p).Get())
-    Println("  Serialized all:")
-    jsonArray.ForEach((j) => Println(s"    $j"))
+    Println(s"  Public: ${publicCodec.Encode(alice).Get()}")
     Println("")
 
-    // Parse back and filter
-    val parsed2 = jsonArray.Map((j) => JsonParse[Person](j))
-    val adults = parsed2.Collect({ case Success(p) if p.Age >= 28 => p.Name })
-    Println(s"  People aged 28+: ${adults.MkString(", ")}")
+    // Different naming strategies
+    Println("=== Naming Strategies ===")
+    Println("")
+
+    val camelCodec = Codec[Person](CamelCase())
+    val kebabCodec = Codec[Person](KebabCase())
+    val asIsCodec  = Codec[Person](AsIs())
+
+    Println(s"  snake_case: ${codec.Encode(alice).Get()}")
+    Println(s"  camelCase:  ${camelCodec.Encode(alice).Get()}")
+    Println(s"  kebab-case: ${kebabCodec.Encode(alice).Get()}")
+    Println(s"  AsIs:       ${asIsCodec.Encode(alice).Get()}")
     Println("")
 }
