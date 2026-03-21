@@ -11,7 +11,7 @@
 # --- Stage 1: Download GALA binary ---
 FROM alpine:3.21 AS gala-download
 
-ARG GALA_VERSION=0.17.1
+ARG GALA_VERSION=0.19.0
 ARG TARGETARCH=amd64
 
 RUN apk add --no-cache curl && \
@@ -49,7 +49,7 @@ COPY --from=builder /build/playground /usr/local/bin/playground
 
 # Pre-warm: extract GALA stdlib and download Go modules so first request is fast
 RUN mkdir -p /tmp/warmup && \
-    printf 'module warmup\n\ngala 0.17.1\n' > /tmp/warmup/gala.mod && \
+    printf 'module warmup\n\ngala 0.19.0\n' > /tmp/warmup/gala.mod && \
     printf 'package main\n\nimport (\n    "fmt"\n    . "martianoff/gala/collection_immutable"\n)\n\nfunc main() {\n    fmt.Println(ArrayOf(1, 2, 3))\n}\n' > /tmp/warmup/main.gala && \
     gala run /tmp/warmup && \
     rm -rf /tmp/warmup

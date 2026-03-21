@@ -53,7 +53,7 @@ func handleRun(galaBin string, req Request) Response {
     val decoder = json.NewDecoder(strings.NewReader(body))
     val err = decoder.Decode(&parsed)
     if err != nil {
-        return Json(s"{\"error\": \"Invalid request\"}")
+        return JsonResponse(s"{\"error\": \"Invalid request\"}")
     }
 
     val code = parsed["code"]
@@ -61,17 +61,17 @@ func handleRun(galaBin string, req Request) Response {
 
     if result.Error != "" {
         val errJson = jsonEscape(result.Error)
-        return Json(s"{\"error\": \"$errJson\", \"time\": \"${result.Time}\"}")
+        return JsonResponse(s"{\"error\": \"$errJson\", \"time\": \"${result.Time}\"}")
     }
 
     val outJson = jsonEscape(result.Output)
-    return Json(s"{\"output\": \"$outJson\", \"time\": \"${result.Time}\"}")
+    return JsonResponse(s"{\"output\": \"$outJson\", \"time\": \"${result.Time}\"}")
 }
 
-func handleExamples(req Request) Response = Json(getExamplesJSON())
+func handleExamples(req Request) Response = JsonResponse(getExamplesJSON())
 
 func handleVersion(galaBin string, req Request) Response =
-    Json(s"{\"version\": \"${getGalaVersion(galaBin)}\"}")
+    JsonResponse(s"{\"version\": \"${getGalaVersion(galaBin)}\"}")
 
 // --- Example loading ---
 
