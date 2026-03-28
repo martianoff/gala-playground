@@ -47,7 +47,14 @@ COPY --from=gala-download /gala /usr/local/bin/gala
 # Install playground server
 COPY --from=builder /build/playground /usr/local/bin/playground
 
-# Pre-warm: extract GALA stdlib and download Go modules so first request is fast
+# Create non-root user BEFORE pre-warming so caches are owned by the right user
+RUN adduser -D -h /home/gala gala && \
+    chown -R gala:gala /go
+USER gala
+WORKDIR /home/gala
+
+# Pre-warm: extract GALA stdlib and populate Go build cache so first request is fast
+# Runs as 'gala' user — caches land in /home/gala/.gala/ and /home/gala/.cache/
 RUN mkdir -p /tmp/warmup && \
     printf 'module warmup\n\ngala 0.24.0\n' > /tmp/warmup/gala.mod && \
     printf 'package main\n\nimport (\n    "fmt"\n    . "martianoff/gala/collection_immutable"\n)\n\nfunc main() {\n    fmt.Println(ArrayOf(1, 2, 3))\n}\n' > /tmp/warmup/main.gala && \
@@ -58,10 +65,5 @@ EXPOSE 3000
 
 # Bind to all interfaces inside container
 ENV BIND_ALL=1
-
-# Run as non-root
-RUN adduser -D -h /home/gala gala
-USER gala
-WORKDIR /home/gala
 
 ENTRYPOINT ["playground"]
