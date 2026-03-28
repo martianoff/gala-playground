@@ -11,7 +11,7 @@
 # --- Stage 1: Download GALA binary ---
 FROM alpine:3.21 AS gala-download
 
-ARG GALA_VERSION=0.24.2
+ARG GALA_VERSION=0.24.3
 ARG TARGETARCH=amd64
 
 RUN apk add --no-cache curl && \
@@ -53,15 +53,26 @@ RUN adduser -D -h /home/gala gala && \
 USER gala
 WORKDIR /home/gala
 
-# Pre-warm: populate the reusable workspace build cache.
-# Uses the same path the server will use at runtime (/tmp/gala-playground-ws).
-# Warms analysis cache and Go build cache for common imports.
+# Copy examples for pre-warming
+COPY --from=builder /build/examples/ /tmp/examples/
+
+# Pre-warm: build every predefined example to populate analysis cache and
+# Go build cache for all import combinations. Uses the same workspace path
+# the server will use at runtime (/tmp/gala-playground-ws).
 # Runs as 'gala' user — caches land in /home/gala/.gala/ and /home/gala/.cache/
 RUN mkdir -p /tmp/gala-playground-ws && \
-    printf 'module playground\n\ngala 0.24.2\n' > /tmp/gala-playground-ws/gala.mod && \
-    printf 'package main\n\nimport . "martianoff/gala/collection_immutable"\n\nfunc main() {\n    Println(ArrayOf(1, 2, 3))\n}\n' > /tmp/gala-playground-ws/main.gala && \
-    gala build -o /tmp/gala-playground-ws/bin /tmp/gala-playground-ws && \
-    echo "Workspace warmed with all stdlib packages"
+    printf 'module playground\n\ngala 0.24.3\n' > /tmp/gala-playground-ws/gala.mod && \
+    for example in /tmp/examples/*.gala; do \
+        name=$(basename "$example" .gala); \
+        cp "$example" /tmp/gala-playground-ws/main.gala; \
+        if gala build -o /tmp/gala-playground-ws/bin /tmp/gala-playground-ws 2>/dev/null; then \
+            echo "  warmed: $name"; \
+        else \
+            echo "  skip:   $name (build error)"; \
+        fi; \
+    done && \
+    rm -rf /tmp/examples 2>/dev/null; \
+    echo "All examples warmed"
 
 EXPOSE 3000
 

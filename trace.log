@@ -1,0 +1,19 @@
+# gala-build-workspace/gen
+gen\main.gen.go:25:24: undefined: std.NewEmbeddedFS
+gen\main.gen.go:118:26: undefined: T
+gen\main.gen.go:120:26: undefined: T
+gen\main.gen.go:130:28: undefined: T
+gen\main.gen.go:132:17: undefined: T
+gen\main.gen.go:147:4: cannot use generic type std.Try[T any] without instantiation
+gen\main.gen.go:148:10: too many return values
+	have (string, error)
+	want (string)
+gen\main.gen.go:152:31: cannot use generic type std.Try[T any] without instantiation
+gen\main.gen.go:153:34: too many arguments in call to std.NewImmutable
+	have (*os.File, error)
+	want (T)
+gen\main.gen.go:156:34: too many arguments in call to std.NewImmutable
+	have (*os.File, error)
+	want (T)
+gen\main.gen.go:156:34: too many errors
+Build failed: go build: exit status 1
