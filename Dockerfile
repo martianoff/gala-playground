@@ -11,7 +11,7 @@
 # --- Stage 1: Download GALA binary ---
 FROM alpine:3.21 AS gala-download
 
-ARG GALA_VERSION=0.24.0
+ARG GALA_VERSION=0.24.2
 ARG TARGETARCH=amd64
 
 RUN apk add --no-cache curl && \
@@ -58,7 +58,7 @@ WORKDIR /home/gala
 # Warms analysis cache and Go build cache for common imports.
 # Runs as 'gala' user — caches land in /home/gala/.gala/ and /home/gala/.cache/
 RUN mkdir -p /tmp/gala-playground-ws && \
-    printf 'module playground\n\ngala 0.24.0\n' > /tmp/gala-playground-ws/gala.mod && \
+    printf 'module playground\n\ngala 0.24.2\n' > /tmp/gala-playground-ws/gala.mod && \
     printf 'package main\n\nimport . "martianoff/gala/collection_immutable"\n\nfunc main() {\n    Println(ArrayOf(1, 2, 3))\n}\n' > /tmp/gala-playground-ws/main.gala && \
     gala build -o /tmp/gala-playground-ws/bin /tmp/gala-playground-ws && \
     echo "Workspace warmed with all stdlib packages"

@@ -1,5 +1,5 @@
 module gala-playground
 
-gala 0.20.0
+gala 0.24.2
 
-require github.com/martianoff/gala-server 0.2.0
+require github.com/martianoff/gala-server 1.0.0

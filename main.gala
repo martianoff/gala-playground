@@ -251,6 +251,7 @@ func startServer(galaBin string) {
         POST("/api/run", (req) => handleRun(galaBin, wsDir, mu, req)).
         GET("/api/examples", handleExamples).
         GET("/api/version", (req) => handleVersion(galaVersion, req)).
+        WithHealthCheck("/health").
         WithFilter(Logger()).
         WithFilter(Recovery()).
         WithFilter(Cors())
@@ -259,5 +260,5 @@ func startServer(galaBin string) {
         openBrowser(s"http://$addr")
     }
 
-    server.ListenOn(addr)
+    server.ListenGracefulOn(addr)
 }
