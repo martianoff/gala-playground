@@ -1,3 +1,6 @@
 *.exe
 .idea/
 .claude
+.gala/
+server.log
+trace.log
