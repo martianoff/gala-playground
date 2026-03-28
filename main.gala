@@ -3,6 +3,7 @@ package main
 import (
     . "github.com/martianoff/gala-server"
     . "martianoff/gala/collection_immutable"
+    . "martianoff/gala/go_interop"
     "encoding/json"
     "context"
     "os"
@@ -10,6 +11,7 @@ import (
     "path/filepath"
     "runtime"
     "strings"
+    "sync"
     "time"
 )
 
@@ -41,11 +43,31 @@ val exampleNames = ArrayOf(
     "try_monad",
 )
 
+// --- Workspace setup ---
+// A fixed directory is reused across requests so gala's per-directory build
+// cache is preserved. A mutex serializes builds to avoid concurrent writes.
+
+func setupWorkspace(galaVersion string) string {
+    val dir = filepath.Join(os.TempDir(), "gala-playground-ws")
+    os.MkdirAll(dir, 0755)
+    os.WriteFile(filepath.Join(dir, "gala.mod"),
+        ToBytes(s"module playground\n\ngala $galaVersion\n"), 0644)
+    return dir
+}
+
+func warmupWorkspace(galaBin string, wsDir string) {
+    val code = "package main\n\nimport . \"martianoff/gala/collection_immutable\"\n\nfunc main() {\n    Println(ArrayOf(1, 2, 3))\n}\n"
+    os.WriteFile(filepath.Join(wsDir, "main.gala"), ToBytes(code), 0644)
+    val cmd = exec.Command(galaBin, "build", "-o", filepath.Join(wsDir, "bin"), wsDir)
+    cmd.Dir = wsDir
+    cmd.CombinedOutput()
+}
+
 // --- Handlers ---
 
 func handleIndex(req Request) Response = Html(indexHTML)
 
-func handleRun(galaBin string, galaVersion string, req Request) Response {
+func handleRun(galaBin string, wsDir string, mu *sync.Mutex, req Request) Response {
     val body = req.Body()
 
     // Go interop: Decode requires mutable pointer target
@@ -57,7 +79,7 @@ func handleRun(galaBin string, galaVersion string, req Request) Response {
     }
 
     val code = parsed["code"]
-    val result = runGalaCode(galaBin, galaVersion, code)
+    val result = runGalaCode(galaBin, wsDir, mu, code)
 
     if result.Error != "" {
         val errJson = jsonEscape(result.Error)
@@ -93,58 +115,65 @@ func getExamplesJSON() string {
 
 // --- Code execution ---
 
-func runGalaCode(galaBin string, galaVersion string, code string) RunResult {
+func runGalaCode(galaBin string, wsDir string, mu *sync.Mutex, code string) RunResult {
     if len(code) > 50000 {
         return RunResult(Output = "", Error = "Code too large (max 50KB)", Time = "")
     }
 
-    return Try(() => os.MkdirTemp("", "gala-playground-*")) match {
-        case Failure(_) => RunResult(Output = "", Error = "Failed to create temp directory", Time = "")
-        case Success(tmpDir) => {
-            val result = prepareAndRun(galaBin, galaVersion, tmpDir, code)
-            os.RemoveAll(tmpDir)
-            return result
-        }
+    // Serialize access to the workspace
+    mu.Lock()
+
+    // Write user code
+    val writeErr = os.WriteFile(filepath.Join(wsDir, "main.gala"), ToBytes(code), 0644)
+    if writeErr != nil {
+        mu.Unlock()
+        return RunResult(Output = "", Error = "Failed to write source file", Time = "")
     }
+
+    // Build and run
+    val result = buildAndRun(galaBin, wsDir)
+    mu.Unlock()
+    return result
 }
 
-func prepareAndRun(galaBin string, galaVersion string, tmpDir string, code string) RunResult {
-    val setup = Try(() => {
-        val srcFile = os.Create(filepath.Join(tmpDir, "main.gala"))
-        srcFile.WriteString(code)
-        srcFile.Close()
-        val modFile = os.Create(filepath.Join(tmpDir, "gala.mod"))
-        modFile.WriteString(s"module playground\n\ngala $galaVersion\n")
-        modFile.Close()
-        return true
-    })
+func buildAndRun(galaBin string, wsDir string) RunResult {
+    val binPath = filepath.Join(wsDir, "bin")
+    var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
 
-    return setup match {
-        case Failure(_) => RunResult(Output = "", Error = "Failed to write source files", Time = "")
-        case Success(_) => {
-            var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+    val start = time.Now()
 
-            val cmd = exec.CommandContext(ctx, galaBin, "run", tmpDir)
-            cmd.Dir = tmpDir
+    // Step 1: gala build (uses cached workspace — fast for repeat imports)
+    val buildCmd = exec.CommandContext(ctx, galaBin, "build", "-o", binPath, wsDir)
+    buildCmd.Dir = wsDir
+    val buildOut, buildErr = buildCmd.CombinedOutput()
 
-            val start = time.Now()
-            // Go interop: CombinedOutput returns useful data in both output and error
-            val output, cmdErr = cmd.CombinedOutput()
-            val elapsed = time.Since(start)
-            val timeStr = f"${elapsed.Seconds()}%.3fs"
-
-            cancel()
-
-            if cmdErr != nil {
-                if ctx.Err() == context.DeadlineExceeded {
-                    return RunResult(Output = "", Error = "Execution timed out (30s limit)", Time = timeStr)
-                }
-                return RunResult(Output = "", Error = string(output), Time = timeStr)
-            }
-
-            return RunResult(Output = string(output), Error = "", Time = timeStr)
+    if buildErr != nil {
+        cancel()
+        val elapsed = time.Since(start)
+        val timeStr = f"${elapsed.Seconds()}%.3fs"
+        if ctx.Err() == context.DeadlineExceeded {
+            return RunResult(Output = "", Error = "Build timed out (30s limit)", Time = timeStr)
         }
+        return RunResult(Output = "", Error = string(buildOut), Time = timeStr)
     }
+
+    // Step 2: execute the binary
+    val runCmd = exec.CommandContext(ctx, binPath)
+    runCmd.Dir = wsDir
+    val runOut, runErr = runCmd.CombinedOutput()
+    val elapsed = time.Since(start)
+    val timeStr = f"${elapsed.Seconds()}%.3fs"
+
+    cancel()
+
+    if runErr != nil {
+        if ctx.Err() == context.DeadlineExceeded {
+            return RunResult(Output = "", Error = "Execution timed out (30s limit)", Time = timeStr)
+        }
+        return RunResult(Output = "", Error = string(runOut), Time = timeStr)
+    }
+
+    return RunResult(Output = string(runOut), Error = "", Time = timeStr)
 }
 
 // --- GALA binary discovery ---
@@ -197,6 +226,14 @@ func startServer(galaBin string) {
     val galaVersion = getGalaVersion(galaBin)
     Println(s"Using GALA binary: $galaBin (version $galaVersion)")
 
+    // Set up reusable workspace (avoids cold builds on every request)
+    val wsDir = setupWorkspace(galaVersion)
+    Println(s"Warming up workspace: $wsDir")
+    warmupWorkspace(galaBin, wsDir)
+    Println("Workspace ready")
+
+    var mu = &sync.Mutex{}
+
     val bind = os.Getenv("BIND_ALL") match {
         case "" => "127.0.0.1"
         case _ => "0.0.0.0"
@@ -211,7 +248,7 @@ func startServer(galaBin string) {
     val server = NewServer().
         WithName("GALA Playground").
         GET("/", handleIndex).
-        POST("/api/run", (req) => handleRun(galaBin, galaVersion, req)).
+        POST("/api/run", (req) => handleRun(galaBin, wsDir, mu, req)).
         GET("/api/examples", handleExamples).
         GET("/api/version", (req) => handleVersion(galaVersion, req)).
         WithFilter(Logger()).

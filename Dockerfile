@@ -53,13 +53,14 @@ RUN adduser -D -h /home/gala gala && \
 USER gala
 WORKDIR /home/gala
 
-# Pre-warm: extract GALA stdlib and populate Go build cache so first request is fast
+# Pre-warm: populate the reusable workspace build cache.
+# Uses the same path the server will use at runtime (/tmp/gala-playground-ws).
 # Runs as 'gala' user — caches land in /home/gala/.gala/ and /home/gala/.cache/
-RUN mkdir -p /tmp/warmup && \
-    printf 'module warmup\n\ngala 0.24.0\n' > /tmp/warmup/gala.mod && \
-    printf 'package main\n\nimport (\n    "fmt"\n    . "martianoff/gala/collection_immutable"\n)\n\nfunc main() {\n    fmt.Println(ArrayOf(1, 2, 3))\n}\n' > /tmp/warmup/main.gala && \
-    gala run /tmp/warmup && \
-    rm -rf /tmp/warmup
+RUN mkdir -p /tmp/gala-playground-ws && \
+    printf 'module playground\n\ngala 0.24.0\n' > /tmp/gala-playground-ws/gala.mod && \
+    printf 'package main\n\nimport . "martianoff/gala/collection_immutable"\n\nfunc main() {\n    Println(ArrayOf(1, 2, 3))\n}\n' > /tmp/gala-playground-ws/main.gala && \
+    gala build -o /tmp/gala-playground-ws/bin /tmp/gala-playground-ws && \
+    echo "Workspace warmed"
 
 EXPOSE 3000
 
