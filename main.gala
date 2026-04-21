@@ -138,7 +138,7 @@ func runGalaCode(galaBin string, wsDir string, mu *sync.Mutex, code string) RunR
 
 func buildAndRun(galaBin string, wsDir string) RunResult {
     val binPath = filepath.Join(wsDir, "bin")
-    var ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+    val ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
 
     val start = time.Now()
 
@@ -232,7 +232,7 @@ func startServer(galaBin string) {
     warmupWorkspace(galaBin, wsDir)
     Println("Workspace ready")
 
-    var mu = &sync.Mutex{}
+    val mu = &sync.Mutex{}
 
     val bind = os.Getenv("BIND_ALL") match {
         case "" => "127.0.0.1"
