@@ -434,14 +434,54 @@
                     opt.textContent = ex.name;
                     examplesSelect.appendChild(opt);
                 });
-                // Load "Hello" example by default
-                const helloIdx = examples.findIndex(e => e.name.toLowerCase().includes('hello'));
-                if (helloIdx >= 0) {
-                    examplesSelect.value = helloIdx;
-                    loadExample(helloIdx);
+                // Auto-load "Hello" only if nothing was loaded from ?code=
+                if (editor.value.trim() === '') {
+                    const helloIdx = examples.findIndex(e => e.name.toLowerCase().includes('hello'));
+                    if (helloIdx >= 0) {
+                        examplesSelect.value = helloIdx;
+                        loadExample(helloIdx);
+                    }
                 }
             } catch (e) {
                 console.error('Failed to load examples:', e);
+            }
+        }
+
+        // Shareable URL support: ?code=<base64url> (also #code=... as fallback)
+        function base64UrlEncode(str) {
+            const bytes = new TextEncoder().encode(str);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function base64UrlDecode(encoded) {
+            let b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+            const pad = b64.length % 4;
+            if (pad === 2) b64 += '==';
+            else if (pad === 3) b64 += '=';
+            else if (pad !== 0) throw new Error('Invalid base64url length');
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new TextDecoder().decode(bytes);
+        }
+
+        function loadFromURL() {
+            // Prefer ?code= in the query string; fall back to #code= in the fragment.
+            let encoded = new URLSearchParams(window.location.search).get('code');
+            if (!encoded && window.location.hash.startsWith('#code=')) {
+                encoded = window.location.hash.slice('#code='.length);
+            }
+            if (!encoded) return false;
+            try {
+                editor.value = base64UrlDecode(encoded);
+                updateLineNumbers();
+                updateCharCount();
+                return true;
+            } catch (e) {
+                console.error('Failed to decode ?code= from URL:', e);
+                return false;
             }
         }
 
@@ -550,16 +590,20 @@
             }
         }
 
-        // Share (copy to clipboard)
+        // Share: copy a permalink (?code=<base64url>) to clipboard.
         async function shareCode() {
+            const code = editor.value;
+            if (!code.trim()) return;
+            const url = window.location.origin + window.location.pathname + '?code=' + base64UrlEncode(code);
+            const btn = document.querySelector('.btn[onclick="shareCode()"]');
+            const orig = btn.textContent.trim();
             try {
-                await navigator.clipboard.writeText(editor.value);
-                const btn = document.querySelector('.btn[onclick="shareCode()"]');
-                const orig = btn.textContent;
-                btn.textContent = 'Copied!';
+                await navigator.clipboard.writeText(url);
+                btn.textContent = 'Link copied!';
                 setTimeout(() => { btn.textContent = orig; }, 1500);
             } catch (e) {
-                alert('Failed to copy to clipboard');
+                // Clipboard blocked (permissions, insecure context) — show the URL for manual copy.
+                prompt('Copy this shareable link:', url);
             }
         }
 
@@ -604,7 +648,8 @@
 
         // Init
         updateLineNumbers();
-        loadExamples();
+        loadFromURL();        // populates editor if ?code=/#code= is present
+        loadExamples();       // skips Hello auto-load if editor already has URL-loaded code
         loadVersion();
     </script>
 </body>
