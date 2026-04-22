@@ -1,6 +1,6 @@
 # GALA Playground
 
-[![GALA](https://img.shields.io/badge/GALA-0.31.0-blue)](https://github.com/martianoff/gala)
+[![GALA](https://img.shields.io/badge/GALA-0.32.0-blue)](https://github.com/martianoff/gala)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -46,7 +46,7 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 ### Local
 
-Requires [Go 1.25+](https://go.dev/dl/) and [GALA 0.31.0+](https://github.com/martianoff/gala/releases).
+Requires [Go 1.25+](https://go.dev/dl/) and [GALA 0.32.0+](https://github.com/martianoff/gala/releases).
 
 ```bash
 # Install GALA

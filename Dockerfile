@@ -11,7 +11,7 @@
 # --- Stage 1: Download GALA binary ---
 FROM alpine:3.21 AS gala-download
 
-ARG GALA_VERSION=0.31.0
+ARG GALA_VERSION=0.32.0
 ARG TARGETARCH=amd64
 
 RUN apk add --no-cache curl && \
@@ -61,7 +61,7 @@ COPY --from=builder /build/examples/ /tmp/examples/
 # the server will use at runtime (/tmp/gala-playground-ws).
 # Runs as 'gala' user — caches land in /home/gala/.gala/ and /home/gala/.cache/
 RUN mkdir -p /tmp/gala-playground-ws && \
-    printf 'module playground\n\ngala 0.31.0\n' > /tmp/gala-playground-ws/gala.mod && \
+    printf 'module playground\n\ngala 0.32.0\n' > /tmp/gala-playground-ws/gala.mod && \
     for example in /tmp/examples/*.gala; do \
         name=$(basename "$example" .gala); \
         cp "$example" /tmp/gala-playground-ws/main.gala; \
