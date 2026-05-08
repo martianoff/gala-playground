@@ -17,7 +17,7 @@ import (
 
 embed val indexHTML = "static/index.html"
 
-embed val exampleFiles EmbeddedFS = "examples/*"
+embed val exampleFiles EmbeddedFS = "examples/*/main.gala"
 
 // --- Types ---
 
@@ -104,7 +104,7 @@ func exampleToJSON(name string, content string) string {
 
 func getExamplesJSON() string {
     val examples = exampleNames.FoldLeft(EmptyArray[string](), (acc, name) => {
-        return exampleFiles.ReadString(s"examples/$name.gala") match {
+        return exampleFiles.ReadString(s"examples/$name/main.gala") match {
             case Success(content) => acc.Append(exampleToJSON(name, content))
             case Failure(_) => acc
         }

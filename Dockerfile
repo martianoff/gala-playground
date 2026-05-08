@@ -62,8 +62,8 @@ COPY --from=builder /build/examples/ /tmp/examples/
 # Runs as 'gala' user — caches land in /home/gala/.gala/ and /home/gala/.cache/
 RUN mkdir -p /tmp/gala-playground-ws && \
     printf 'module playground\n\ngala 0.45.0\n' > /tmp/gala-playground-ws/gala.mod && \
-    for example in /tmp/examples/*.gala; do \
-        name=$(basename "$example" .gala); \
+    for example in /tmp/examples/*/main.gala; do \
+        name=$(basename "$(dirname "$example")"); \
         cp "$example" /tmp/gala-playground-ws/main.gala; \
         if gala build -o /tmp/gala-playground-ws/bin /tmp/gala-playground-ws 2>/dev/null; then \
             echo "  warmed: $name"; \
