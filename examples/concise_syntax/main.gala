@@ -1,0 +1,39 @@
+package main
+
+import (
+    . "martianoff/gala/collection_immutable"
+    "strconv"
+)
+
+// Concise GALA — the short, idiomatic forms of everyday patterns.
+// Each line uses the terse version; the comment shows the longhand it replaces.
+
+func main() {
+    val nums = ArrayOf(1, 2, 3, 4, 5)
+
+    // Placeholder lambdas: `_` fills in a single-use parameter, left to right.
+    Println("=== Placeholder lambdas ===")
+    Println(nums.Map(_ * 2))          // (x) => x * 2
+    Println(nums.Filter(_ % 2 == 0))  // (x) => x % 2 == 0
+    Println(nums.FoldLeft(0, _ + _))  // (acc, x) => acc + x
+
+    // Collect: filter and transform in a single pass.
+    Println("")
+    Println("=== Collect (filter + map in one) ===")
+    Println(nums.Collect({ case n if n % 2 == 0 => n * n })) // .Filter(...).Map(...)
+
+    // By-name thunk sugar: pass a bare expression where a `func() T` is expected.
+    // It runs lazily inside Try, and a Go (T, error) call is auto-wrapped so its
+    // error becomes a Failure.
+    Println("")
+    Println("=== By-name thunk sugar ===")
+    Println(Try(strconv.Atoi("42")).GetOrElse(-1))   // Try(() => strconv.Atoi("42"))
+    Println(Try(strconv.Atoi("nope")).GetOrElse(-1)) // parse error caught -> -1
+
+    // Type inference: no explicit `[T]` at the call site.
+    Println("")
+    Println("=== Inference ===")
+    Println(Some(99).GetOrElse(0))    // Some[int](99) — element type inferred from 99
+    val absent Option[int] = None()   // None[int]() — pinned by the declared type
+    Println(absent.GetOrElse(7))
+}

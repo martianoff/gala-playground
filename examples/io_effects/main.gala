@@ -41,10 +41,10 @@ func main() {
     Println("=== Map & FlatMap ===")
     Println("")
 
-    val doubled = io.Map[int, int](io.Of(21), (x int) => x * 2)
+    val doubled = io.Map[int, int](io.Of(21), (x) => x * 2)
     Println(s"  io.Of(21).Map(*2)       = ${doubled.Run().Get()}")
 
-    val chained = io.FlatMap[int, int](io.Of(10), (x int) => io.Of(x + 32))
+    val chained = io.FlatMap[int, int](io.Of(10), (x) => io.Of(x + 32))
     Println(s"  io.Of(10).FlatMap(+32)  = ${chained.Run().Get()}")
     Println("")
 
@@ -85,7 +85,7 @@ func main() {
 
     val failChain = io.FlatMap[int, int](
         io.Fail[int](errors.New("initial error")),
-        (x int) => io.Of(x * 2),
+        (x) => io.Of(x * 2),
     )
     Println(s"  Fail.FlatMap(*2) runs second step: ${failChain.Run().IsSuccess()}")
     Println(s"  Error preserved:  ${failChain.Run().IsFailure()}")

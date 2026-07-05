@@ -2,7 +2,7 @@ package main
 
 import (
     . "martianoff/gala/collection_immutable"
-    . "martianoff/gala/string_utils"
+    . "martianoff/gala/strings"
 )
 
 // Roman numeral to integer.

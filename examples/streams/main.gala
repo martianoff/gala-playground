@@ -21,7 +21,7 @@ func main() {
 
     // Stream pipeline: sum of squares of first 10 even numbers
     val sumOfSquares = From(1)
-        .Filter((x) => x % 2 == 0)
+        .Filter(_ % 2 == 0)
         .Take(10)
         .Map((x) => x * x)
         .Fold(0, (acc, x) => acc + x)

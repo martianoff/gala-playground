@@ -1,6 +1,6 @@
 # GALA Playground
 
-[![GALA](https://img.shields.io/badge/GALA-0.45.0-blue)](https://github.com/martianoff/gala)
+[![GALA](https://img.shields.io/badge/GALA-0.61.0-blue)](https://github.com/martianoff/gala)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -46,7 +46,7 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 ### Local
 
-Requires [Go 1.25+](https://go.dev/dl/) and [GALA 0.45.0+](https://github.com/martianoff/gala/releases).
+Requires [Go 1.25+](https://go.dev/dl/) and [GALA 0.61.0+](https://github.com/martianoff/gala/releases).
 
 ```bash
 # Install GALA
@@ -110,7 +110,7 @@ The server is written entirely in GALA using the [`gala-server`](https://github.
 |----------|--------|-------------|
 | `/api/run` | POST | Execute GALA code. Body: `{"code": "..."}`. Returns: `{"output", "error", "time"}` |
 | `/api/examples` | GET | List all built-in examples. Returns: `[{"name", "code"}]` |
-| `/api/version` | GET | Returns the GALA version. Returns: `{"version": "0.10.0"}` |
+| `/api/version` | GET | Returns the GALA version. Returns: `{"version": "0.61.0"}` |
 | `/` | GET | Serves the playground UI |
 
 ### Limits
