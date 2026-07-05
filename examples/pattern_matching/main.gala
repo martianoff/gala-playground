@@ -24,7 +24,7 @@ func classify(n int) string = n match {
 // Custom extractor
 type Even struct {}
 func (e Even) Unapply(i int) Option[int] =
-    if (i % 2 == 0) Some(i) else None[int]()
+    if (i % 2 == 0) Some(i) else None()
 
 func describeValue(v any) string = v match {
     case s: string => s"string: \"$s\""

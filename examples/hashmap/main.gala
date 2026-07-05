@@ -31,6 +31,6 @@ func main() {
     Println(s"Modified: size=${modified.Size()}, has 'a'=${modified.Contains("a")}, has 'd'=${modified.Contains("d")}")
 
     // MapValues
-    val doubled = original.MapValues((v) => v * 2)
+    val doubled = original.MapValues(_ * 2)
     Println(s"Doubled:  ${doubled.MkString(", ")}")
 }

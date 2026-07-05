@@ -52,7 +52,7 @@ func main() {
     Println("=== URL Parsing ===")
     Println("")
 
-    val urlRegex = regex.MustCompile("(https?)://([^/]+)(/.*)?" )
+    val urlRegex = regex.MustCompile("(https?)://([^/]+)(/.*)?")
     val urls = ArrayOf("https://gala-lang.dev/docs", "http://localhost:8080", "not a url")
     urls.ForEach((input) => {
         val result = input match {

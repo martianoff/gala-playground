@@ -31,7 +31,7 @@ func showConfig(c Config) string =
 
 struct Point(X int, Y int)
 
-func (p Point) String() string = s"(${ p.X }, ${ p.Y })"
+func (p Point) String() string = s"(${p.X}, ${p.Y})"
 
 // --- Named Arguments in Method Chains ---
 

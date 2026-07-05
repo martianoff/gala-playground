@@ -8,7 +8,7 @@ import . "martianoff/gala/collection_immutable"
 func findUser(name string) Option[string] = name match {
     case "alice" => Some("alice@example.com")
     case "bob"   => Some("bob@example.com")
-    case _       => None[string]()
+    case _       => None()
 }
 
 func validateAge(age int) Either[string, int] =
@@ -30,7 +30,7 @@ func main() {
     })
 
     // Map + GetOrElse chain
-    val email = findUser("alice").Map((e) => "Email: " + e).GetOrElse("N/A")
+    val email = findUser("alice").Map((e) => s"Email: $e").GetOrElse("N/A")
     Println(email)
 
     // Either: validation

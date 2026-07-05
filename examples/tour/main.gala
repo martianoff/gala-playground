@@ -286,7 +286,7 @@ func demoTryMonad() {
         val (label, result) = pair
         val msg = result match {
             case Success(v) => f"  $label%-10s = $v  ✓"
-            case Failure(e) => s"  ${label}          → ${e.Error()}  ✗ (recovered!)"
+            case Failure(e) => s"  $label          → ${e.Error()}  ✗ (recovered!)"
         }
         Println(msg)
     })
