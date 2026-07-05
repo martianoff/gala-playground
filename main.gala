@@ -27,6 +27,7 @@ struct RunResult(Output string, Error string, Time string)
 
 val exampleNames = ArrayOf(
     "collections",
+    "concise_syntax",
     "generics",
     "hashmap",
     "hello",
