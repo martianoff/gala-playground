@@ -1,11 +1,13 @@
 package main
 
+import "martianoff/gala/go_builtins"
+
 // Try[T] wraps computations that may panic.
 // Panics become Failure values instead of crashing.
 
 func safeDivide(a int, b int) Try[int] = Try(() => {
     if b == 0 {
-        panic("division by zero")
+        go_builtins.Panic("division by zero")
     }
     return a / b
 })

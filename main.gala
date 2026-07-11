@@ -117,7 +117,7 @@ func getExamplesJSON() string {
 // --- Code execution ---
 
 func runGalaCode(galaBin string, wsDir string, mu *sync.Mutex, code string) RunResult {
-    if len(code) > 50000 {
+    if code.ByteSize() > 50000 {
         return RunResult(Output = "", Error = "Code too large (max 50KB)", Time = "")
     }
 
@@ -235,7 +235,7 @@ func startServer(galaBin string) {
 
     val mu = &sync.Mutex{}
 
-    val bind = os.Getenv("BIND_ALL") match {
+    val bindHost = os.Getenv("BIND_ALL") match {
         case "" => "127.0.0.1"
         case _ => "0.0.0.0"
     }
@@ -244,7 +244,7 @@ func startServer(galaBin string) {
         case "" => "3000"
         case _ => envPort
     }
-    val addr = s"$bind:$port"
+    val addr = s"$bindHost:$port"
 
     val server = NewServer().
         WithName("GALA Playground").
@@ -257,7 +257,7 @@ func startServer(galaBin string) {
         WithFilter(Recovery()).
         WithFilter(Cors())
 
-    if bind == "127.0.0.1" {
+    if bindHost == "127.0.0.1" {
         openBrowser(s"http://$addr")
     }
 
