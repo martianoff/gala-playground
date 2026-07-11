@@ -2,6 +2,7 @@ package main
 
 import (
     "strings"
+    "martianoff/gala/go_builtins"
     . "martianoff/gala/collection_immutable"
 )
 
@@ -22,7 +23,7 @@ func printBanner() {
 func section(title string) {
     val bar = strings.Repeat("─", 58)
     Println(s"┌${bar}┐")
-    val pad = 58 - len(title)
+    val pad = 58 - title.Size()
     val left = pad / 2
     val right = pad - left
     Println(s"│${strings.Repeat(" ", left)}$title${strings.Repeat(" ", right)}│")
@@ -233,7 +234,7 @@ func validateAge(age int) Either[string, int] =
     if (age >= 0 && age <= 150) Right[string, int](age) else Left[string, int]("Invalid age")
 
 func validateName(name string) Either[string, string] =
-    if (len(name) > 0) Right[string, string](name) else Left[string, string]("Name cannot be empty")
+    if (name.Size() > 0) Right[string, string](name) else Left[string, string]("Name cannot be empty")
 
 func demoEither() {
     section("5. Either — Elegant Error Handling")
@@ -266,7 +267,7 @@ func demoEither() {
 
 func safeDivide(a int, b int) Try[int] = Try(() => {
     if b == 0 {
-        panic("division by zero")
+        go_builtins.Panic("division by zero")
     }
     return a / b
 })
@@ -390,8 +391,8 @@ func demoGenerics() {
     Println(s"  clamp(\"z\", \"a\", \"m\") = ${clamp("z", "a", "m")}")
 
     val p = Pair[string, int]("hello", 42)
-    val p2 = p.MapFirst((s) => len(s)).MapSecond((n) => n * 2)
-    Println(s"  Pair(\"${p.First}\", ${p.Second}) → MapFirst(len).MapSecond(*2) → Pair(${p2.First}, ${p2.Second})")
+    val p2 = p.MapFirst((s) => s.Size()).MapSecond((n) => n * 2)
+    Println(s"  Pair(\"${p.First}\", ${p.Second}) → MapFirst(.Size()).MapSecond(*2) → Pair(${p2.First}, ${p2.Second})")
     Println("")
 }
 
