@@ -11,7 +11,7 @@
 # --- Stage 1: Download GALA binary ---
 FROM alpine:3.21 AS gala-download
 
-ARG GALA_VERSION=0.70.0
+ARG GALA_VERSION=0.72.0
 ARG TARGETARCH=amd64
 
 RUN apk add --no-cache curl && \
