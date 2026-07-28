@@ -1,0 +1,36 @@
+package main
+
+import . "martianoff/gala/concurrent"
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Compile-time data-race safety   (error GALA-E0037)
+// ─────────────────────────────────────────────────────────────────────────
+//
+//  GALA rejects data races when it COMPILES your code — not at runtime.
+//
+//  A closure that crosses a concurrency boundary (Future / FutureOn) may only
+//  capture *shareable* state: immutable values and immutable collections.
+//  Capturing a reassignable `var` would let the enclosing scope mutate it
+//  while the goroutine runs — a data race — so the compiler refuses it.
+//
+//  ▶ Try it: swap the safe line for the commented one below and press Run.
+//    GALA stops the build with:
+//
+//      error[GALA-E0037]: closure crossing a concurrency boundary captures
+//      reassignable var "counter" — a data race, because the enclosing scope
+//      may reassign it while the goroutine runs
+//
+func main() {
+    var counter = 0
+    counter = 41
+
+    // ❌ Data race — captures the reassignable `counter` (uncomment to see E0037):
+    // val fut = Future(() => counter + 1)
+
+    // ✅ Safe — snapshot into an immutable `val` before the boundary, so the
+    //    goroutine captures a stable copy:
+    val snapshot = counter
+    val fut = Future(() => snapshot + 1)
+
+    Println(s"result = ${fut.Get()}")
+}

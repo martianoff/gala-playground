@@ -28,6 +28,7 @@ struct RunResult(Output string, Error string, Time string)
 val exampleNames = ArrayOf(
     "collections",
     "concise_syntax",
+    "data_race_safety",
     "generics",
     "hashmap",
     "hello",
@@ -192,10 +193,21 @@ func findGala() Option[string] =
                 .OrElse(Try(() => exec.LookPath("gala.exe")))
                 .ToOption())
 
+// The `gala version` banner's first line is "GALA version X.Y.Z"; the bare
+// version is its last whitespace-separated token (this also handles a plain
+// "X.Y.Z" line). Returning the clean version keeps the runtime workspace
+// gala.mod ("gala X.Y.Z") matching the image's pre-warmed build cache — the
+// full first line would write a malformed "gala GALA version X.Y.Z" and miss
+// the cache on every request, making every run compile cold.
 func getGalaVersion(galaBin string) string =
     Try(() => exec.Command(galaBin, "version").Output())
-        .Map((out) => strings.TrimSpace(strings.Split(string(out), "\n")[0]))
+        .Map((out) => versionToken(string(out)))
         .GetOrElse("unknown")
+
+func versionToken(output string) string {
+    val firstLine = ArrayFromSlice(strings.Split(output, "\n")).HeadOption().GetOrElse("")
+    return ArrayFromSlice(strings.Fields(firstLine)).LastOption().GetOrElse("unknown")
+}
 
 // --- Helpers ---
 
