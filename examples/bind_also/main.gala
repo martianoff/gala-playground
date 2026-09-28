@@ -1,0 +1,67 @@
+package main
+
+import (
+    . "martianoff/gala/collection_immutable"
+    "errors"
+    "strconv"
+)
+
+// bind / also: flat, top-to-bottom monadic code instead of nested FlatMaps.
+//
+//   bind x = m   unwraps m; the first None / Failure ends the whole block
+//   also y = m   a step that does not depend on the one before it
+//
+// The block's last line builds the result with Some(...) / Success(...).
+
+struct Config(Host string, Port int, Workers int)
+
+// Option: two independent lookups; any missing key makes the result None.
+func endpoint(env HashMap[string, string]) Option[string] {
+    bind host = env.Get("HOST")
+    also port = env.Get("PORT")
+    Some(s"$host:$port")
+}
+
+// require turns a missing key into a Failure that names the key.
+func require(env HashMap[string, string], key string) Try[string] = env.Get(key) match {
+    case Some(v) => Success(v)
+    case None() => Failure(errors.New(s"missing $key"))
+}
+
+// inRange keeps n when lo <= n <= hi.
+func inRange(n int, lo int, hi int) Try[int] =
+    if (n >= lo && n <= hi) Success(n)
+    else Failure(errors.New(s"port $n is outside $lo..$hi"))
+
+// Try: every step may fail, and later steps use earlier values.
+// strconv.Atoi returns (int, error), which is already a Try[int].
+func parseConfig(env HashMap[string, string]) Try[Config] {
+    bind host    = require(env, "HOST")
+    bind rawPort = require(env, "PORT")
+    bind port    = strconv.Atoi(rawPort)
+    bind checked = inRange(port, 1, 65535)
+    bind workers = strconv.Atoi(env.GetOrElse("WORKERS", "4"))
+    Success(Config(host, checked, workers))
+}
+
+func report(label string, env HashMap[string, string]) string = parseConfig(env) match {
+    case Success(c) => s"$label: ${c.Host}:${c.Port} with ${c.Workers} workers"
+    case Failure(e) => s"$label: ${e.Error()}"
+}
+
+func main() {
+    val good = HashMapOf(("HOST", "localhost"), ("PORT", "8080"), ("WORKERS", "8"))
+    val noPort = HashMapOf(("HOST", "localhost"))
+
+    Println("=== Option: bind + also ===")
+    Println(endpoint(good).GetOrElse("<none>"))
+    Println(endpoint(noPort).GetOrElse("<none>"))
+
+    Println("")
+    Println("=== Try: the first failure wins ===")
+    Println(report("good", good))
+    Println(report("defaults", HashMapOf(("HOST", "db"), ("PORT", "5432"))))
+    Println(report("no port", noPort))
+    Println(report("bad port", HashMapOf(("HOST", "db"), ("PORT", "http"))))
+    Println(report("port 0", HashMapOf(("HOST", "db"), ("PORT", "0"))))
+}

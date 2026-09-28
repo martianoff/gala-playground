@@ -1,0 +1,55 @@
+package main
+
+import (
+    . "martianoff/gala/validation"
+    "strings"
+)
+
+// Validated[E, A] collects EVERY error instead of stopping at the first.
+// Either / Try are fail-fast: a form with three bad fields reports one.
+// Over Validated, `bind` + `also` checks every field and reports them all.
+
+struct SignUp(Name string, Email string, Age int)
+
+func vName(s string) Validated[string, string] =
+    if (strings.TrimSpace(s) != "") Valid(s) else InvalidOf("name is required")
+
+func vEmail(s string) Validated[string, string] =
+    if (strings.Contains(s, "@")) Valid(s) else InvalidOf(s"'$s' is not an email")
+
+func vAge(n int) Validated[string, int] =
+    if (n >= 13 && n <= 120) Valid(n) else InvalidOf(s"age $n must be 13..120")
+
+// Accumulating: the three `also`-grouped checks are independent,
+// so all of them run and their errors are combined.
+func signUp(name string, email string, age int) Validated[string, SignUp] {
+    bind n = vName(name)
+    also e = vEmail(email)
+    also a = vAge(age)
+    Valid(SignUp(n, e, a))
+}
+
+// Fail-fast: with `bind` on every line the checks are chained by FlatMap,
+// exactly like Either or Try, so the first error ends the block.
+func signUpFailFast(name string, email string, age int) Validated[string, SignUp] {
+    bind n = vName(name)
+    bind e = vEmail(email)
+    bind a = vAge(age)
+    Valid(SignUp(n, e, a))
+}
+
+func show(v Validated[string, SignUp]) string = v match {
+    case Valid(u) => s"welcome, ${u.Name} (${u.Email}, ${u.Age})"
+    case Invalid(errs) => s"${errs.Size()} problem(s): ${errs.MkString("; ")}"
+}
+
+func main() {
+    Println("=== Validated: report ALL errors ===")
+    Println(show(signUp("Ada", "ada@example.com", 36)))
+    Println(show(signUp("Bob", "bob-at-example", 36)))
+    Println(show(signUp(" ", "nobody", 7)))
+
+    Println("")
+    Println("=== bind only (like Either / Try): stop at the FIRST error ===")
+    Println(show(signUpFailFast(" ", "nobody", 7)))
+}

@@ -26,10 +26,13 @@ struct RunResult(Output string, Error string, Time string)
 // --- Example names ---
 
 val exampleNames = ArrayOf(
+    "bind_also",
     "collections",
     "concise_syntax",
     "data_race_safety",
+    "futures",
     "generics",
+    "go_interop",
     "hashmap",
     "hello",
     "io_effects",
@@ -43,6 +46,7 @@ val exampleNames = ArrayOf(
     "streams",
     "tour",
     "try_monad",
+    "validated",
 )
 
 // --- Workspace setup ---

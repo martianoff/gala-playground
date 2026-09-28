@@ -1,0 +1,58 @@
+package main
+
+import (
+    . "martianoff/gala/collection_immutable"
+    . "martianoff/gala/concurrent"
+    "errors"
+    "time"
+)
+
+// Future[T]: a value computed concurrently. Start work with Future(...),
+// combine futures with Map / FlatMap / Zip, then Await or Get the result.
+// Results are combined by position, never by which one finished first,
+// so the output is the same on every run.
+
+struct Quote(Symbol string, Price int)
+
+// fetchQuote simulates a slow network call. Short symbols take LONGER,
+// so the futures below finish in the opposite order to how they started.
+func fetchQuote(symbol string) Future[Quote] = Future(() => {
+    time.Sleep(time.Duration(60 - symbol.Size() * 10) * time.Millisecond)
+    Quote(symbol, symbol.Size() * 100 + 7)
+})
+
+// bind + also over Future runs both fetches at the same time.
+func pairValue(a string, b string) Future[int] {
+    bind x = fetchQuote(a)
+    also y = fetchQuote(b)
+    FutureOf(x.Price + y.Price)
+}
+
+func main() {
+    Println("=== Fan out, collect in order ===")
+    // Traverse starts one future per symbol and gathers them into one.
+    val quotes = Traverse(ArrayOf("GO", "GALA", "SCALA"), fetchQuote)
+    quotes.Get().ForEach((q) => Println(s"  ${q.Symbol}: ${q.Price}"))
+    val total = quotes.Map((qs) => qs.FoldLeft(0, (acc, q) => acc + q.Price))
+    Println(s"  total: ${total.Get()}")
+
+    Println("")
+    Println("=== Zip and FlatMap ===")
+    val (golang, rustlang) = fetchQuote("GO").Zip(fetchQuote("RUST")).Get()
+    Println(s"  ${golang.Symbol} vs ${rustlang.Symbol}: ${rustlang.Price - golang.Price} apart")
+    // FlatMap: the second step needs the first result.
+    val order = fetchQuote("GALA").FlatMap((q) => Future(q.Price * 3))
+    Println(s"  3 x GALA costs ${order.Get()}")
+    Println(s"  GO + GALA = ${pairValue("GO", "GALA").Get()}")
+
+    Println("")
+    Println("=== Failures are values too ===")
+    val offline = FutureFailed[Quote](errors.New("quote feed offline"))
+    val batch = Sequence(ArrayOf(fetchQuote("GO"), offline))
+    Println(batch.Await() match {
+        case Success(qs) => s"  got ${qs.Size()} quotes"
+        case Failure(e) => s"  batch failed: ${e.Error()}"
+    })
+    val fallback = offline.Recover((e) => Quote("CACHED", 0))
+    Println(s"  recovered: ${fallback.Get().Symbol}")
+}

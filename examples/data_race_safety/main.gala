@@ -25,12 +25,12 @@ func main() {
     counter = 41
 
     // ❌ Data race — captures the reassignable `counter` (uncomment to see E0037):
-    // val fut = Future(() => counter + 1)
+    // val fut = Future(counter + 1)
 
     // ✅ Safe — snapshot into an immutable `val` before the boundary, so the
     //    goroutine captures a stable copy:
     val snapshot = counter
-    val fut = Future(() => snapshot + 1)
+    val fut = Future(snapshot + 1)
 
     Println(s"result = ${fut.Get()}")
 }
