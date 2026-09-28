@@ -22,13 +22,18 @@ func main() {
     Println("=== Collect (filter + map in one) ===")
     Println(nums.Collect({ case n if n % 2 == 0 => n * n })) // .Filter(...).Map(...)
 
+    // Go calls: a (T, error) result is already a Try[T], so there is no
+    // `if err != nil` check and no Try(...) wrapper; the error is a Failure.
+    Println("")
+    Println("=== Go (T, error) calls are Try ===")
+    Println(strconv.Atoi("42").GetOrElse(-1))   // n, err := strconv.Atoi("42"); if err != nil { ... }
+    Println(strconv.Atoi("nope").GetOrElse(-1)) // parse error -> -1
+
     // By-name thunk sugar: pass a bare expression where a `func() T` is expected.
-    // It runs lazily inside Try, and a Go (T, error) call is auto-wrapped so its
-    // error becomes a Failure.
+    // Try runs it lazily and turns a panic into a Failure.
     Println("")
     Println("=== By-name thunk sugar ===")
-    Println(Try(strconv.Atoi("42")).GetOrElse(-1))   // Try(() => strconv.Atoi("42"))
-    Println(Try(strconv.Atoi("nope")).GetOrElse(-1)) // parse error caught -> -1
+    Println(Try(nums.Get(9)).GetOrElse(0))       // Try(() => nums.Get(9)): out of range -> 0
 
     // Type inference: no explicit `[T]` at the call site.
     Println("")

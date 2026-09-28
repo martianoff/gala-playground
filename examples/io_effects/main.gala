@@ -21,7 +21,7 @@ func main() {
     Println(s"  io.Of(42).Run()  = ${pure.Run().Get()}")
 
     // Suspended computation — deferred until .Run()
-    val suspended = io.Suspend(() => 21 * 2)
+    val suspended = io.Suspend(21 * 2)
     Println(s"  Suspend(21*2)    = ${suspended.Run().Get()}")
     Println("")
 

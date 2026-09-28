@@ -15,7 +15,7 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 
 - **Browser-based code editor** with line numbers, tab support, and resizable split panels
 - **Instant execution** -- compile and run GALA code with one click or `Ctrl+Enter`
-- **15 built-in examples** covering all major GALA features
+- **21 built-in examples** covering all major GALA features
 - **Error display** -- compile errors and runtime panics shown inline
 - **Share** -- copy code to clipboard with one click
 - **Dark theme** -- developer-friendly IDE-like interface
@@ -38,6 +38,10 @@ A web-based playground for the [GALA programming language](https://github.com/ma
 | JSON | `JsonStringify`, `JsonParse`, `Json[T]` extractor, `Collect` |
 | Regex | Capture groups via `Unapply` + `Array` destructuring, `FindAll` |
 | IO Effects | `IO[T]` monad, `Suspend`, `Map`/`FlatMap`, `Recover`, `AndThen` |
+| Go Interop | Go `(T, error)` calls as `Try`, `(A, B)` results as tuples, raw `val v, err = ...` |
+| Bind & Also | `bind`/`also` monadic blocks over `Option` and `Try`, short-circuit on first failure |
+| Futures | `Future`, `Traverse`, `Zip`, `FlatMap`, `Sequence`, `Recover`, concurrent `also` |
+| Validated | Error-accumulating validation with `Validated` + `also` vs fail-fast `bind` |
 | Tour | Full 10-section showcase with formatted output |
 
 ---
@@ -88,8 +92,8 @@ gala-playground/
   static/
     index.html       # Single-page frontend (editor + output)
   examples/
-    hello.gala       # 15 pre-loaded GALA examples
-    sealed_types.gala
+    hello/main.gala  # 21 pre-loaded GALA examples
+    sealed_types/main.gala
     ...
   Dockerfile         # Multi-stage build (GALA build + runtime)
 ```

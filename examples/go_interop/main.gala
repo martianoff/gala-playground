@@ -1,0 +1,60 @@
+package main
+
+import (
+    . "martianoff/gala/collection_immutable"
+    "net/url"
+    "path"
+    "strconv"
+    "strings"
+)
+
+// Calling Go from GALA: a Go call that returns several results is ONE value.
+//
+//   (T, error)     -> Try[T]              strconv.Atoi(s)
+//   (A, B)         -> Tuple[A, B]         path.Split(p)
+//   (A, B, C)      -> Tuple3[A, B, C]     strings.Cut(s, sep)
+//
+// No `if err != nil` ladder: match on it, chain it, or take a default.
+
+// A (T, error) call as a match subject, with a guard.
+func describe(text string) string = strconv.Atoi(text) match {
+    case Success(n) if n < 0 => s"$text -> negative number $n"
+    case Success(n) => s"$text -> $n"
+    case Failure(e) => s"$text -> ${e.Error()}"
+}
+
+func main() {
+    Println("=== (T, error) is a Try ===")
+    ArrayOf("42", "-7", "forty-two").ForEach((s) => Println(describe(s)))
+
+    Println("")
+    Println("=== Chaining ===")
+    Println(strconv.Atoi("21").Map(_ * 2))       // Success(42)
+    Println(strconv.Atoi("oops").GetOrElse(0))   // 0: the error became a default
+    // Array[Try[int]] -> keep only the numbers that parsed.
+    val valid = ArrayOf("1", "2", "x", "4")
+        .Map((s) => strconv.Atoi(s))
+        .Collect({ case Success(n) => n })
+    Println(s"valid numbers: $valid, sum = ${valid.FoldLeft(0, _ + _)}")
+
+    Println("")
+    Println("=== Parsing a query string ===")
+    // url.ParseQuery gives a Try[url.Values]; FlatMap feeds it into another Try.
+    val pageOf = (raw string) => url.ParseQuery(raw).FlatMap((q) => strconv.Atoi(q.Get("page")))
+    Println(pageOf("q=gala&page=3"))             // Success(3)
+    Println(pageOf("q=gala&page=last").IsFailure())
+    Println(pageOf("q=%zz").IsFailure())         // bad escape: ParseQuery failed
+
+    Println("")
+    Println("=== Two or three results are a Tuple ===")
+    val (dir, file) = path.Split("/srv/app/config.yaml")
+    Println(s"dir=$dir file=$file")
+    val (key, value, found) = strings.Cut("mode=fast", "=")
+    Println(s"key=$key value=$value found=$found")
+
+    Println("")
+    Println("=== Raw Go values, when you need them ===")
+    // A multi-name binding skips the Try and gives Go's plain results.
+    val n, err = strconv.Atoi("oops")
+    Println(s"n=$n err=${err.Error()}")
+}
